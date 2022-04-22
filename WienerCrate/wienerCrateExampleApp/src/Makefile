@@ -13,9 +13,9 @@ PROD_IOC = wienerCrateExample
 #
 # Pick up the net-snmp support
 #
-USR_CFLAGS += `net-snmp-config --cflags`
-USR_LDFLAGS += `net-snmp-config --libs`
-PROD_LDLIBS += `net-snmp-config --libs`
+USR_CFLAGS += `$(NETSNMP_TOP)/$(PKG_ARCH)/bin/net-snmp-config --cflags`
+USR_LDFLAGS += `$(NETSNMP_TOP)/$(PKG_ARCH)/bin/net-snmp-config --libs`
+PROD_LDLIBS += `$(NETSNMP_TOP)/$(PKG_ARCH)/bin/net-snmp-config --libs`
 
 # wienerCrateExample.dbd will be created and installed
 DBD += wienerCrateExample.dbd

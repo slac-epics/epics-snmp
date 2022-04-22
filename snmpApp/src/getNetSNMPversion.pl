@@ -8,7 +8,9 @@
 #
 
 # get netsnmp x.y.z version
-$cmd = "net-snmp-config --version";
+#$cmd = "/afs/slac/g/lcls/package/net-snmp/5.8.0/rhel6-x86_64/bin/net-snmp-config --version";
+$cmd = "${ARGV[0]}/net-snmp-config --version";
+
 $vers_dotted = `$cmd`;
 die "command '$cmd' failed: $!\n" if ( $? == -1 );
 
