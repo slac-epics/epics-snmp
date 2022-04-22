@@ -1,5 +1,7 @@
+#RELEASE Location of external products
 
-EPICS_BASE = /usr/lib/epics
+-include $(TOP)/../configure/SUPPORT.$(EPICS_HOST_ARCH)
+-include $(TOP)/configure/RELEASE.local
+-include $(TOP)/RELEASE.local
 
-TEMPLATE_TOP = $(EPICS_BASE)/templates/makeBaseApp/top
-
+-include $(TOP)/../configure/EPICS_BASE.$(EPICS_HOST_ARCH)

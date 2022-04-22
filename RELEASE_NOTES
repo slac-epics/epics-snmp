@@ -1,0 +1,23 @@
+#==============================================================
+#
+#  Name: RELEASE_NOTES
+#
+#  Rem:  This file contains the release notes for epics-snmp package 
+#        as it pertains to the LCLS release format and procedures.
+#        Please note that this file does not come with the 
+#        standard epics-snmp package release
+#
+#        The initial version of this software written 
+#        by Eric Norum at the National Superconducting Cyclotron
+#        Laboratory (NSCL)
+# 
+#        The download site is:
+#        https://groups.nscl.msu.edu/controls
+#
+#==============================================================
+#
+R1.0.0   13-Mar-2022, K. Luchini (luchini):
+         Inital version (built with EPICS  R7.0.3.1-1.0.3)
+
+# End of file
+
