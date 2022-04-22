@@ -1,0 +1,37 @@
+
+#--- Process watchdog ------------------------------
+#
+#  Macros required:
+#     P: PV prefix
+#     N: proc entry in snmpd.conf file. First entry is 1, second is 2, etc.
+#     HOST: SNMP host IP address or hostname
+#     SCAN: Record scan period
+#  Environment variable required (set in st.cmd):
+#     COMM: SNMP community, e.g. "public"
+#
+
+record(stringin, "$(P):Process$(N)Name") {
+    field(DESC, "Process $(N)")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) UCD-SNMP-MIB::prNames.$(N) $(MASK1="STRING:") 100")
+    field(SCAN, "$(SCAN="5 second")")
+    field(FLNK, "$(P):Process$(N)Count")
+}
+
+record(longin, "$(P):Process$(N)Count") {
+    field(DESC, "Process $(N) count")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) UCD-SNMP-MIB::prCount.$(N) $(MASK2="INTEGER:") 100")
+    field(EGU,  "$(EGU="")")
+    field(LOLO, "$(LOLO="")")
+    field(LOW,  "$(LOW="")")
+    field(HIGH, "$(HIGH="")")
+    field(HIHI, "$(HIHI="")")
+    field(LLSV, "$(LLSV=NO_ALARM)")
+    field(LSV,  "$(LSV=NO_ALARM)")
+    field(HSV,  "$(HSV=NO_ALARM)")
+    field(HHSV, "$(HHSV=NO_ALARM)")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV")
+}
+
+

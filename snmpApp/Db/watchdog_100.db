@@ -1,0 +1,324 @@
+#
+#  Template for Watchdog-100 environmental monitor
+#
+#  Macros required:
+#     P: PV prefix
+#     HOST: SNMP host IP address or hostname
+#     ROOM, RACK: Location of device or sensor  
+#  Environment variable required (set in st.cmd):
+#     WCR_PREF: Combined string of SNMP community followed by OID prefix, e.g. "public GEIST-V4-MIB::"
+#
+# This file assumes that the Watchdog is using the default units of degrees F.
+# The raw temp and dew point are given in units of 0.1 degrees F, e.g.: "727 0.1 Degrees" is equal to 72.7 degrees F.
+#   
+# WARNING: This device seems to only support reading 16 OIDs per request.
+# This means that there can only be 16 Snmp records per device using the devSnmp driver from NSCL/FRIB.
+# I have not found a way around this.  This is why the external sensor serial number records are commented out below.
+# -md
+#
+
+record(ai, "$(P):Rm$(ROOM)Rack$(RACK)Temp_F") {
+    field(DESC, "Internal sensor temp")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(INP,  "@$(HOST) %(WCR_PREF)internalTemp.1 INTEGER: 32 iR")
+    field(LINR, "SLOPE")
+    field(ESLO, "$(tslo=0.1)")
+    field(EOFF, "$(toff=0)")
+    field(EGU,  "F")
+    field(PREC, "$(prec=1)")
+    field(SCAN, "1 second")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)Temp_calc")
+}
+
+record(calc, "$(P):Rm$(ROOM)Rack$(RACK)Temp_calc") {
+    field(DESC, "Internal sensor temp calc")
+    field(ASG,  "Internal")
+    field(INPA, "$(P):Rm$(ROOM)Rack$(RACK)Temp_F")
+    field(INPB, "0.556")
+    field(INPC, "-17.778")
+    field(CALC, "A*B + C")
+    field(EGU,  "C")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)Temp")
+}
+
+record(ai, "$(P):Rm$(ROOM)Rack$(RACK)Temp") {
+    field(DESC, "Internal sensor temp")
+    field(INP, "$(P):Rm$(ROOM)Rack$(RACK)Temp_calc")
+    field(EGU,  "C")
+    field(PREC, "$(prec=1)")
+    field(LOLO, "$(tlolo=16)")
+    field(LOW,  "$(tlow=18)")
+    field(HIGH, "$(thigh=26)")
+    field(HIHI, "$(thihi=28)")
+    field(LLSV, "$(tllsv=MAJOR)")
+    field(LSV,  "$(tlsv=MINOR)")
+    field(HSV,  "$(thsv=MINOR)")
+    field(HHSV, "$(thhsv=MAJOR)")
+    field(HYST, "$(thyst=0.5)")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)Humidity")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV HYST PREC")
+}
+
+record(longin, "$(P):Rm$(ROOM)Rack$(RACK)Humidity") {
+    field(DESC, "Internal sensor humidity")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(WCR_PREF)internalHumidity.1 INTEGER: 32")
+    field(EGU,  "%")
+    field(LOLO, "$(hlolo=26)")
+    field(LOW,  "$(hlow=28)")
+    field(HIGH, "$(hhigh=58)")
+    field(HIHI, "$(hhihi=60)")
+    field(LLSV, "$(hllsv=MAJOR)")
+    field(LSV,  "$(hlsv=MINOR)")
+    field(HSV,  "$(hhsv=MINOR)")
+    field(HHSV, "$(hhhsv=MAJOR)")
+    field(HYST, "$(hhyst=1)")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)DewPoint_F")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV HYST")
+}
+
+record(ai, "$(P):Rm$(ROOM)Rack$(RACK)DewPoint_F") {
+    field(DESC, "Internal sensor dew point")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(INP,  "@$(HOST) %(WCR_PREF)internalDewPoint.1 INTEGER: 32 iR")
+    field(LINR, "SLOPE")
+    field(ESLO, "$(tslo=0.1)")
+    field(EOFF, "$(toff=0)")
+    field(PREC, "$(prec=1)")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)DewPoint_calc")
+}
+
+record(calc, "$(P):Rm$(ROOM)Rack$(RACK)DewPoint_calc") {
+    field(DESC, "Internal sensor dew point calc")
+    field(ASG,  "Internal")
+    field(INPA, "$(P):Rm$(ROOM)Rack$(RACK)DewPoint_F")
+    field(INPB, "0.556")
+    field(INPC, "-17.778")
+    field(CALC, "A*B + C")
+    field(EGU,  "C")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)DewPoint")
+}
+
+record(ai, "$(P):Rm$(ROOM)Rack$(RACK)DewPoint") {
+    field(DESC, "Internal sensor dew point")
+    field(INP, "$(P):Rm$(ROOM)Rack$(RACK)DewPoint_calc")
+    field(EGU,  "C")
+    field(PREC, "$(prec=1)")
+    field(HIGH, "18")
+    field(HIHI, "16")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "0.5")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)Status_raw")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV HYST PREC")
+}
+
+record(longin, "$(P):Rm$(ROOM)Rack$(RACK)Status_raw") {
+    field(DESC, "Internal sensor status")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(INP,  "@$(HOST) %(WCR_PREF)internalAvail.1 Gauge32: 32")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)Status")
+}
+
+record(bi, "$(P):Rm$(ROOM)Rack$(RACK)Status") {
+    field(DESC, "Internal sensor status")
+    field(INP,  "$(P):Rm$(ROOM)Rack$(RACK)Status_raw")
+    field(ZNAM, "Unavailable")
+    field(ONAM, "OK")
+    field(ZSV,  "MAJOR")
+    field(OSV,  "NO_ALARM")
+}
+
+record(stringin, "$(P):Rm$(ROOM)Rack$(RACK)Model") {
+    field(DESC, "Device model")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(WCR_PREF)productTitle.0 STRING: 64")
+    field(SCAN, "10 second")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)Firmware")
+}
+
+record(stringin, "$(P):Rm$(ROOM)Rack$(RACK)Firmware") {
+    field(DESC, "Device firmware")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(WCR_PREF)productVersion.0 STRING: 64")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)SerNum")
+}
+
+record(stringin, "$(P):Rm$(ROOM)Rack$(RACK)SerNum") {
+    field(DESC, "Device serial number")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(WCR_PREF)internalSerial.1 STRING: 64")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)Name")
+}
+
+record(stringin, "$(P):Rm$(ROOM)Rack$(RACK)Name") {
+    field(DESC, "Internal sensor name")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(WCR_PREF)internalName.1 STRING: 64")
+    field(FLNK, "$(P):Rm$(ROOM)Rack$(RACK)NSensors")
+}
+
+record(longin, "$(P):Rm$(ROOM)Rack$(RACK)NSensors") {
+    field(DESC, "Number of configured sensors")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(WCR_PREF)deviceCount.0 INTEGER: 32")
+}
+
+#--- External sensor 1  ----------------------------------
+
+record(ai, "$(P):Rm$(ROOM)Ext1Temp_F") {
+    field(DESC, "Ext. sensor 1 temp raw")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(INP,  "@$(HOST) %(WCR_PREF)tempSensorTemp.1 INTEGER: 32 iR")
+    field(LINR, "SLOPE")
+    field(ESLO, "$(tslo=0.1)")
+    field(EOFF, "$(toff=0)")
+    field(EGU,  "F")
+    field(PREC, "$(prec=1)")
+    field(SCAN, "1 second")
+    field(FLNK, "$(P):Rm$(ROOM)Ext1Temp_calc")
+}
+
+record(calc, "$(P):Rm$(ROOM)Ext1Temp_calc") {
+    field(DESC, "Ext. sensor 1 temp calc")
+    field(ASG,  "Internal")
+    field(INPA, "$(P):Rm$(ROOM)Ext1Temp_F")
+    field(INPB, "0.556")
+    field(INPC, "-17.778")
+    field(CALC, "A*B + C")
+    field(EGU,  "C")
+    field(FLNK, "$(P):Rm$(ROOM)Ext1Temp")
+}
+
+record(ai, "$(P):Rm$(ROOM)Ext1Temp") {
+    field(DESC, "Ext. sensor 1 temp")
+    field(INP, "$(P):Rm$(ROOM)Ext1Temp_calc")
+    field(EGU,  "C")
+    field(PREC, "$(prec=1)")
+    field(LOLO, "$(tlolo=16)")
+    field(LOW,  "$(tlow=18)")
+    field(HIGH, "$(thigh=26)")
+    field(HIHI, "$(thihi=28)")
+    field(LLSV, "$(tllsv=MAJOR)")
+    field(LSV,  "$(tlsv=MINOR)")
+    field(HSV,  "$(thsv=MINOR)")
+    field(HHSV, "$(thhsv=MAJOR)")
+    field(HYST, "$(thyst=0.5)")
+    field(FLNK, "$(P):Rm$(ROOM)Ext1Status_raw")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV HYST PREC")
+}
+
+record(longin, "$(P):Rm$(ROOM)Ext1Status_raw") {
+    field(DESC, "Ext. sensor 1 status")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(INP,  "@$(HOST) %(WCR_PREF)tempSensorAvail.1 Gauge32: 32")
+    field(FLNK, "$(P):Rm$(ROOM)Ext1Status")
+}
+
+record(bi, "$(P):Rm$(ROOM)Ext1Status") {
+    field(DESC, "Ext. sensor 1 status")
+    field(INP,  "$(P):Rm$(ROOM)Ext1Status_raw")
+    field(ZNAM, "Unavailable")
+    field(ONAM, "OK")
+    field(ZSV,  "MAJOR")
+    field(OSV,  "NO_ALARM")
+}
+
+#record(stringin, "$(P):Rm$(ROOM)Ext1SerNum") {
+#    field(DESC, "Ext. sensor 1 serial num.")
+#    field(DTYP, "Snmp")
+#    field(INP,  "@$(HOST) %(WCR_PREF)tempSensorSerial.1 STRING: 64")
+#    field(SCAN, "10 second")
+#    field(FLNK, "$(P):Rm$(ROOM)Ext1Name")
+#}
+
+record(stringin, "$(P):Rm$(ROOM)Ext1Name") {
+    field(DESC, "Ext. sensor 1 name")
+    field(DTYP, "Snmp")
+    field(SCAN, "10 second")
+    field(INP,  "@$(HOST) %(WCR_PREF)tempSensorName.1 STRING: 64")
+}
+
+#--- External sensor 2  ----------------------------------
+
+record(ai, "$(P):Rm$(ROOM)Ext2Temp_F") {
+    field(DESC, "Ext. sensor 2 temp raw")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(INP,  "@$(HOST) %(WCR_PREF)tempSensorTemp.2 INTEGER: 32 iR")
+    field(LINR, "SLOPE")
+    field(ESLO, "$(tslo=0.1)")
+    field(EOFF, "$(toff=0)")
+    field(EGU,  "F")
+    field(PREC, "$(prec=1)")
+    field(SCAN, "1 second")
+    field(FLNK, "$(P):Rm$(ROOM)Ext2Temp_calc")
+}
+
+record(calc, "$(P):Rm$(ROOM)Ext2Temp_calc") {
+    field(DESC, "Ext. sensor 2 temp calc")
+    field(ASG,  "Internal")
+    field(INPA, "$(P):Rm$(ROOM)Ext2Temp_F")
+    field(INPB, "0.556")
+    field(INPC, "-17.778")
+    field(CALC, "A*B + C")
+    field(EGU,  "C")
+    field(FLNK, "$(P):Rm$(ROOM)Ext2Temp")
+}
+
+record(ai, "$(P):Rm$(ROOM)Ext2Temp") {
+    field(DESC, "Ext. sensor 2 temp")
+    field(INP, "$(P):Rm$(ROOM)Ext2Temp_calc")
+    field(EGU,  "C")
+    field(PREC, "$(prec=1)")
+    field(LOLO, "$(tlolo=16)")
+    field(LOW,  "$(tlow=18)")
+    field(HIGH, "$(thigh=26)")
+    field(HIHI, "$(thihi=28)")
+    field(LLSV, "$(tllsv=MAJOR)")
+    field(LSV,  "$(tlsv=MINOR)")
+    field(HSV,  "$(thsv=MINOR)")
+    field(HHSV, "$(thhsv=MAJOR)")
+    field(HYST, "$(thyst=0.5)")
+    field(FLNK, "$(P):Rm$(ROOM)Ext2Status_raw")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV HYST PREC")
+}
+
+record(longin, "$(P):Rm$(ROOM)Ext2Status_raw") {
+    field(DESC, "Ext. sensor 2 status")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(INP,  "@$(HOST) %(WCR_PREF)tempSensorAvail.2 Gauge32: 32")
+    field(FLNK, "$(P):Rm$(ROOM)Ext2Status")
+}
+
+record(bi, "$(P):Rm$(ROOM)Ext2Status") {
+    field(DESC, "Ext. sensor 2 status")
+    field(INP,  "$(P):Rm$(ROOM)Ext2Status_raw")
+    field(ZNAM, "Unavailable")
+    field(ONAM, "OK")
+    field(ZSV,  "MAJOR")
+    field(OSV,  "NO_ALARM")
+}
+
+#record(stringin, "$(P):Rm$(ROOM)Ext2SerNum") {
+#    field(DESC, "Ext. sensor 2 serial num.")
+#    field(DTYP, "Snmp")
+#    field(INP,  "@$(HOST) %(WCR_PREF)tempSensorSerial.2 STRING: 64")
+#    field(SCAN, "10 second")
+#    field(FLNK, "$(P):Rm$(ROOM)Ext2Name")
+#}
+
+record(stringin, "$(P):Rm$(ROOM)Ext2Name") {
+    field(DESC, "Ext. sensor 2 name")
+    field(DTYP, "Snmp")
+    field(SCAN, "10 second")
+    field(INP,  "@$(HOST) %(WCR_PREF)tempSensorName.2 STRING: 64")
+}
+
+

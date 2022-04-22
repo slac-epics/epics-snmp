@@ -1,0 +1,75 @@
+
+#--- Alarm summaries ------------------------------
+record(calc, "$(P):DiskAlarmSum1") {
+    field(INPA, "$(P):Disk1Use CPP MS")
+    field(INPB, "$(P):Disk2Use CPP MS")
+    field(INPC, "$(P):Disk3Use CPP MS")
+    field(INPD, "$(P):Disk4Use CPP MS")
+    field(INPE, "$(P):Disk5Use CPP MS")
+    field(INPF, "$(P):Disk6Use CPP MS")
+    field(INPG, "$(P):Disk7Use CPP MS")
+    field(INPH, "$(P):Disk8Use CPP MS")
+    field(INPI, "$(P):Disk9Use CPP MS")
+    field(INPJ, "$(P):Disk10Use CPP MS")
+    field(INPK, "$(P):Disk11Use CPP MS")
+    field(INPL, "$(P):Disk12Use CPP MS")
+    field(PINI, "YES")
+    field(FLNK, "$(P):DiskAlarmSum")
+}
+
+record(calc, "$(P):DiskAlarmSum2") {
+    field(INPA, "$(P):Disk13Use CPP MS")
+    field(INPB, "$(P):Disk14Use CPP MS")
+    field(INPC, "$(P):Disk15Use CPP MS")
+    field(INPD, "$(P):Disk16Use CPP MS")
+    field(INPE, "$(P):Disk17Use CPP MS")
+    field(INPF, "$(P):Disk18Use CPP MS")
+    field(INPG, "$(P):Disk19Use CPP MS")
+    field(INPH, "$(P):Disk20Use CPP MS")
+    field(PINI, "YES")
+    field(FLNK, "$(P):DiskAlarmSum")
+}
+
+record(calc, "$(P):DiskAlarmSum3") {
+    field(INPA, "$(P):Disk1ErrFlag CPP MS")
+    field(INPB, "$(P):Disk2ErrFlag CPP MS")
+    field(INPC, "$(P):Disk3ErrFlag CPP MS")
+    field(INPD, "$(P):Disk4ErrFlag CPP MS")
+    field(INPE, "$(P):Disk5ErrFlag CPP MS")
+    field(INPF, "$(P):Disk6ErrFlag CPP MS")
+    field(INPG, "$(P):Disk7ErrFlag CPP MS")
+    field(INPH, "$(P):Disk8ErrFlag CPP MS")
+    field(INPI, "$(P):Disk9ErrFlag CPP MS")
+    field(INPJ, "$(P):Disk10ErrFlag CPP MS")
+    field(INPK, "$(P):Disk11ErrFlag CPP MS")
+    field(INPL, "$(P):Disk12ErrFlag CPP MS")
+    field(PINI, "YES")
+    field(FLNK, "$(P):DiskAlarmSum")
+}
+
+record(calc, "$(P):DiskAlarmSum4") {
+    field(INPA, "$(P):Disk13ErrFlag CPP MS")
+    field(INPB, "$(P):Disk14ErrFlag CPP MS")
+    field(INPC, "$(P):Disk15ErrFlag CPP MS")
+    field(INPD, "$(P):Disk16ErrFlag CPP MS")
+    field(INPE, "$(P):Disk17ErrFlag CPP MS")
+    field(INPF, "$(P):Disk18ErrFlag CPP MS")
+    field(INPG, "$(P):Disk19ErrFlag CPP MS")
+    field(INPH, "$(P):Disk20ErrFlag CPP MS")
+    field(PINI, "YES")
+    field(FLNK, "$(P):DiskAlarmSum")
+}
+
+record(calc, "$(P):DiskAlarmSum") {
+    field(INPA, "$(P):DiskAlarmSum1 NPP MS")
+    field(INPB, "$(P):DiskAlarmSum2 NPP MS")
+    field(INPC, "$(P):DiskAlarmSum3 NPP MS")
+    field(INPD, "$(P):DiskAlarmSum4 NPP MS")
+    field(PINI, "YES")
+    field(FLNK, "$(P):AlarmSummary")
+}
+
+record(calc, "$(P):AlarmSummary") {
+    field(INPA, "$(P):DiskAlarmSum NPP MS")
+}
+

@@ -1,0 +1,49 @@
+
+file snmp_si.template {
+pattern
+{                ATTR,                    DESC,                         OID,       SCAN, PINI}
+{      Outlet$(N)Name,           "Outlet name", %(M)tlpPduOutletName.1.$(N), "5 second",    1}
+}
+
+file snmp_so.template {
+pattern
+{                ATTR,                    DESC,                         OID}
+{ Outlet$(N)NameSetpt,  "Outlet name setpoint", %(M)tlpPduOutletName.1.$(N)}
+}
+
+file snmp_mbbi.template {
+pattern
+{                ATTR,                    DESC,                          OID,       SCAN,  ONST, TWST, MASK}
+{     Outlet$(N)State,          "Outlet state", %(M)tlpPduOutletState.1.$(N), "1 second", "Off", "On",  "("}
+}
+
+file snmp_mbbo.template {
+pattern
+{                ATTR,                    DESC,                            OID,   ZRST,  ONST, TWST,     THST, MASK}
+{Outlet$(N)StateSetpt, "Outlet state setpoint", %(M)tlpPduOutletCommand.1.$(N), "Idle", "Off", "On", "Reboot",  "("}
+}
+
+file snmp_li.template {
+pattern
+{                ATTR,                    DESC,                              OID, EGU,       SCAN}
+{     Outlet$(N)OnDly,       "Outlet on delay", %(M)tlpPduOutletRampDelay.1.$(N), "s", "5 second"}
+}
+
+file snmp_lo.template {
+pattern
+{                ATTR,                    DESC,                              OID, EGU}
+{Outlet$(N)OnDlySetpt, "Outlet on delay setpt", %(M)tlpPduOutletRampDelay.1.$(N), "s"}
+}
+
+file snmp_mbbi.template {
+pattern
+{                   ATTR,                    DESC,                               OID,       SCAN,         ZRST,             ONST, MASK}
+{     Outlet$(N)OnDlyAct,      "Outlet on action", %(M)tlpPduOutletRampAction.1.$(N), "5 second", "Remain off", "On after delay",  "("}
+}
+
+file snmp_mbbo.template {
+pattern
+{                   ATTR,                    DESC,                               OID,         ZRST,             ONST, MASK}
+{Outlet$(N)OnDlyActSetpt,  "Outlet on act. setpt", %(M)tlpPduOutletRampAction.1.$(N), "Remain off", "On after delay",  "("}
+}
+

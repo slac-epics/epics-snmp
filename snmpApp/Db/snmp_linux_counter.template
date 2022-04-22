@@ -1,0 +1,62 @@
+#
+#  Template for linux machine interface
+#
+#  Macros required:
+#     P: PV prefix
+#     HOST: SNMP host IP address or hostname
+#     ATTR: PV attribute
+#     OID: SNMP OID for parameter of interest
+#     DESC: PV desc.
+#  Environment variable required (set in st.cmd):
+#     COMM: SNMP community, e.g. "public"
+#
+
+record(ai, "$(P):$(ATTR)Raw") {
+    field(DESC, "$(DESC)")
+    field(ASG,  "Internal")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) $(OID) $(MASK="INTEGER:") 100")
+    field(SCAN, "$(DELTA_T=5) second")
+    field(FLNK, "$(P):$(ATTR)Comp")
+}
+
+record(compress, "$(P):$(ATTR)Comp") {
+    field(DESC, "$(DESC)")
+    field(ASG,  "Internal")
+    field(INP,  "$(P):$(ATTR)Raw NPP MS")
+    field(NSAM, "$(NSAM=2)")
+    field(ALG,  "Circular Buffer")
+    field(FLNK, "$(P):$(ATTR)Asub")
+}
+
+record(aSub, "$(P):$(ATTR)Asub") {
+    field(DESC, "$(DESC)")
+    field(ASG,  "Internal")
+    field(SNAM, "$(ASUB)")
+    field(INPA,  "$(P):$(ATTR)Comp NPP MS")
+    field(FTA,  "DOUBLE")
+    field(NOA,  "$(NSAM=2)")
+    field(INPB,  "$(DELTA_T=5)")
+    field(FTB,  "DOUBLE")
+    field(NOB,  "1")
+    field(FTVA, "DOUBLE")
+    field(NOVA, "1")
+    field(OUTA, "$(P):$(ATTR) PP MS")
+}
+
+record(ai, "$(P):$(ATTR)") {
+    field(DESC, "$(DESC)")
+    field(EGU,  "$(EGU="")")
+    field(LOLO, "$(LOLO="")")
+    field(LOW,  "$(LOW="")")
+    field(HIGH, "$(HIGH="")")
+    field(HIHI, "$(HIHI="")")
+    field(LLSV, "$(LLSV=NO_ALARM)")
+    field(LSV,  "$(LSV=NO_ALARM)")
+    field(HSV,  "$(HSV=NO_ALARM)")
+    field(HHSV, "$(HHSV=NO_ALARM)")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV")
+}
+
+
+

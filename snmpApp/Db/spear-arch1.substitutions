@@ -1,0 +1,31 @@
+
+file snmp_linux_process.template {
+pattern
+{ N,        SCAN, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV}
+{ 1, "10 second",    0,   "",   "",    2, NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{ 2, "10 second",    7,   "",   "",    9,    MAJOR, NO_ALARM, NO_ALARM,    MAJOR}
+{ 3, "10 second",    0,   "",   20,   50,    MAJOR, NO_ALARM,    MINOR,    MAJOR}
+{ 4, "10 second",    0,   "",   "",    2,    MAJOR, NO_ALARM, NO_ALARM,    MAJOR}
+{ 5, "10 second",    0,   "",   "",  100, NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{ 6, "10 second",    0,   "",   "",  100, NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{ 7, "10 second",    0,   "",   "",  100, NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{ 8, "10 second",    0,   "",   "",  100, NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{ 9, "10 second",    0,   "",   "",    2,    MAJOR, NO_ALARM, NO_ALARM,    MAJOR}
+{ 10,"10 second",    0,   "",   "",    2,    MAJOR, NO_ALARM, NO_ALARM,    MAJOR}
+}
+
+file snmp_linux_disk.template {
+pattern
+{ N, ID}
+{ 1,  1}
+{ 2,  2}
+{ 3,  3}
+{ 4,  4}
+{ 5,  5}
+{ 6,  6}
+{ 7,  7}
+{ 8,  8}
+{ 9,  9}
+{10, 10}
+}
+

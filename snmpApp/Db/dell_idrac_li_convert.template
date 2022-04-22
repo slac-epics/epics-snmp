@@ -1,0 +1,49 @@
+#
+#  Template for Dell iDRAC server interface
+#
+#  Macros required:
+#     P: PV prefix
+#     HOST: SNMP host IP address or hostname
+#     ATTR: PV attribute
+#     OID: SNMP OID for parameter of interest
+#     DESC: PV desc.
+#     SCAN: Record scan period
+#  Environment variable required (set in st.cmd):
+#     WCR_PREF: Combined string of SNMP community followed by OID prefix, e.g. "public IDRAC-MIB-SMIv2::"
+#
+
+record(longin, "$(P):$(ATTR)_RAW") {
+    field(DESC, "$(DESC)")
+    field(ASG,  "Internal")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(WCR_PREF)$(OID) INTEGER: 100")
+    field(SCAN, "$(SCAN)")
+    field(FLNK, "$(P):$(ATTR)_calc")
+}
+
+record(calcout, "$(P):$(ATTR)_calc") {
+    field(DESC, "$(DESC)")
+    field(ASG,  "Internal")
+    field(INPA, "$(P):$(ATTR)_RAW")
+    field(INPB, "$(SLO=1.0)")
+    field(INPC, "$(OFF=0.0)")
+    field(CALC, "A*B + C")
+    field(OUT,  "$(P):$(ATTR) PP")
+    info(autosaveFields, "INPB INPC")
+}
+
+record(ai, "$(P):$(ATTR)") {
+    field(DESC, "$(DESC)")
+    field(EGU,  "$(EGU="")")
+    field(PREC, "$(PREC=1)")
+    field(LOLO, "$(LOLO="")")
+    field(LOW,  "$(LOW="")")
+    field(HIGH, "$(HIGH="")")
+    field(HIHI, "$(HIHI="")")
+    field(LLSV, "$(LLSV=NO_ALARM)")
+    field(LSV,  "$(LSV=NO_ALARM)")
+    field(HSV,  "$(HSV=NO_ALARM)")
+    field(HHSV, "$(HHSV=NO_ALARM)")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV PREC")
+}
+

@@ -1,0 +1,90 @@
+
+file dell_idrac_mbbi_status.template {
+pattern
+{              ATTR,                       DESC,                                              OID,        SCAN}
+{      SystemStatus,            "System status",                             globalSystemStatus.0,  "1 second"}
+{     StorageStatus,           "Storage status",                            globalStorageStatus.0,  "1 second"}
+{     ChassisStatus,           "Chassis status",                       systemStateChassisStatus.1,  "5 second"}
+{          PSStatus,      "Power supply status",           systemStatePowerSupplyStatusCombined.1,  "1 second"}
+{     VoltageStatus,           "Voltage status",               systemStateVoltageStatusCombined.1,  "1 second"}
+{    AmperageStatus,          "Amperage status",              systemStateAmperageStatusCombined.1,  "1 second"}
+{     CoolingStatus,           "Cooling status",         systemStateCoolingDeviceStatusCombined.1,  "1 second"}
+{        TempStatus,       "Temperature status",           systemStateTemperatureStatusCombined.1,  "1 second"}
+{   TempStatsStatus, "Temperature stats status", systemStateTemperatureStatisticsStatusCombined.1,  "1 second"}
+{      MemoryStatus,            "Memory status",          systemStateMemoryDeviceStatusCombined.1,  "2 second"}
+{         CPUStatus,               "CPU status",       systemStateProcessorDeviceStatusCombined.1,  "2 second"}
+{        Net1Status,  "Network device 1 status",                          networkDeviceStatus.1.1,  "2 second"}
+{        Net2Status,  "Network device 2 status",                          networkDeviceStatus.1.2,  "2 second"}
+{       Disk1Status,            "Disk 1 status",                    physicalDiskComponentStatus.1,  "2 second"}
+{       Disk2Status,            "Disk 2 status",                    physicalDiskComponentStatus.2,  "2 second"}
+{       Disk3Status,            "Disk 3 status",                    physicalDiskComponentStatus.3,  "2 second"}
+{ ChassisIntrStatus,     "Chassis Intr. status",      systemStateChassisIntrusionStatusCombined.1,  "5 second"}
+{     BatteryStatus,           "Battery status",               systemStateBatteryStatusCombined.1,  "5 second"}
+{        BIOSStatus,              "BIOS status",                             systemBIOSStatus.1.1,  "5 second"}
+{     EventLog1Sevr,     "Event log 1 severity",                       eventLogSeverityStatus.1.1, "10 second"}
+{     EventLog2Sevr,     "Event log 2 severity",                       eventLogSeverityStatus.1.2, "10 second"}
+{     EventLog3Sevr,     "Event log 3 severity",                       eventLogSeverityStatus.1.3, "10 second"}
+}
+
+file dell_idrac_si.template {
+pattern
+{              ATTR,                       DESC,                                              OID,        SCAN, OUT}
+{         ModelName,               "Model name",                                systemModelName.0, "10 second"}
+{        ServiceTag,              "Service tag",                               systemServiceTag.0, "10 second"}
+{        RACVersion,              "RAC Version",                                     racVersion.0, "10 second"}
+{       BIOSVersion,             "BIOS Version",                        systemBIOSVersionName.1.1, "10 second"}
+{     EventLog1Time,         "Event log 1 time",                             eventLogDateName.1.1, "10 second"}
+{     EventLog2Time,         "Event log 2 time",                             eventLogDateName.1.2, "10 second"}
+{     EventLog3Time,         "Event log 3 time",                             eventLogDateName.1.3, "10 second"}
+{         Fan01Name,              "Fan 01 name",                    coolingDeviceLocationName.1.1, "10 second", "$(P):Fan01Speed.DESC"}
+{         Fan02Name,              "Fan 02 name",                    coolingDeviceLocationName.1.2, "10 second", "$(P):Fan02Speed.DESC"}
+{         Fan03Name,              "Fan 03 name",                    coolingDeviceLocationName.1.3, "10 second", "$(P):Fan03Speed.DESC"}
+{         Fan04Name,              "Fan 04 name",                    coolingDeviceLocationName.1.4, "10 second", "$(P):Fan04Speed.DESC"}
+{         Fan05Name,              "Fan 05 name",                    coolingDeviceLocationName.1.5, "10 second", "$(P):Fan05Speed.DESC"}
+{         Fan06Name,              "Fan 06 name",                    coolingDeviceLocationName.1.6, "10 second", "$(P):Fan06Speed.DESC"}
+{         Fan07Name,              "Fan 07 name",                    coolingDeviceLocationName.1.7, "10 second", "$(P):Fan07Speed.DESC"}
+{         Fan08Name,              "Fan 08 name",                    coolingDeviceLocationName.1.8, "10 second", "$(P):Fan08Speed.DESC"}
+{         Fan09Name,              "Fan 09 name",                    coolingDeviceLocationName.1.9, "10 second", "$(P):Fan09Speed.DESC"}
+{         Fan10Name,              "Fan 10 name",                   coolingDeviceLocationName.1.10, "10 second", "$(P):Fan10Speed.DESC"}
+{         Temp1Name,        "Temp probe 1 name",                 temperatureProbeLocationName.1.1, "10 second", "$(P):Probe1Temp.DESC"}
+{         Temp2Name,        "Temp probe 2 name",                 temperatureProbeLocationName.1.2, "10 second", "$(P):Probe2Temp.DESC"}
+{         Temp3Name,        "Temp probe 3 name",                 temperatureProbeLocationName.1.3, "10 second", "$(P):Probe3Temp.DESC"}
+}
+
+file dell_idrac_wf.template {
+pattern
+{              ATTR,                       DESC,                                              OID,        SCAN}
+{      EventLog1Msg,      "Event log 1 message",                               eventLogRecord.1.1, "10 second"}
+{      EventLog2Msg,      "Event log 2 message",                               eventLogRecord.1.2, "10 second"}
+{      EventLog3Msg,      "Event log 3 message",                               eventLogRecord.1.3, "10 second"}
+}
+
+file dell_idrac_li.template {
+pattern
+{              ATTR,                       DESC,                                              OID,        SCAN, EGU, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV}
+{           PS1Volt,              "PS1 Voltage",               powerSupplyCurrentInputVoltage.1.1,  "5 second",   V,  108,  112,  128,  132,    MAJOR,    MINOR,    MINOR,    MAJOR}
+{           PS2Volt,              "PS2 Voltage",               powerSupplyCurrentInputVoltage.1.2,  "5 second",   V,  108,  112,  128,  132,    MAJOR,    MINOR,    MINOR,    MAJOR}
+{        Fan01Speed,             "Fan 01 Speed",                         coolingDeviceReading.1.1,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan02Speed,             "Fan 02 Speed",                         coolingDeviceReading.1.2,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan03Speed,             "Fan 03 Speed",                         coolingDeviceReading.1.3,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan04Speed,             "Fan 04 Speed",                         coolingDeviceReading.1.4,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan05Speed,             "Fan 05 Speed",                         coolingDeviceReading.1.5,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan06Speed,             "Fan 06 Speed",                         coolingDeviceReading.1.6,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan07Speed,             "Fan 07 Speed",                         coolingDeviceReading.1.7,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan08Speed,             "Fan 08 Speed",                         coolingDeviceReading.1.8,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan09Speed,             "Fan 09 Speed",                         coolingDeviceReading.1.9,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{        Fan10Speed,             "Fan 10 Speed",                        coolingDeviceReading.1.10,  "5 second", RPM,  480,  840,   "",   "",    MAJOR,    MINOR, NO_ALARM, NO_ALARM}
+{          CPUSpeed,                "CPU Speed",                  processorDeviceCurrentSpeed.1.1,  "5 second", MHz,   "",   "", 4000,   "", NO_ALARM, NO_ALARM,    MINOR, NO_ALARM}
+}
+
+file dell_idrac_li_convert.template {
+pattern
+{              ATTR,                       DESC,                                              OID,        SCAN, SLO, OFF, EGU, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV}
+{           PS1Curr,              "PS1 Current",                         amperageProbeReading.1.1,  "2 second", 0.1, 0.0,   A,   "",   "",   12,   14, NO_ALARM, NO_ALARM,    MINOR,    MAJOR}
+{           PS2Curr,              "PS2 Current",                         amperageProbeReading.1.2,  "2 second", 0.1, 0.0,   A,   "",   "",   12,   14, NO_ALARM, NO_ALARM,    MINOR,    MAJOR}
+{             Power,        "Power consumption",                         amperageProbeReading.1.3,  "2 second", 1.0, 0.0,   W,   "",   "",  600,  660, NO_ALARM, NO_ALARM,    MINOR,    MAJOR}
+{        Probe1Temp,             "Probe 1 Temp",                      temperatureProbeReading.1.1,  "2 second", 0.1, 0.0,   C,    3,   "",   "",   89,    MAJOR, NO_ALARM, NO_ALARM,    MAJOR}
+{        Probe2Temp,             "Probe 2 Temp",                      temperatureProbeReading.1.2,  "2 second", 0.1, 0.0,   C,    3,    8,   75,   80,    MAJOR,    MINOR,    MINOR,    MAJOR}
+{        Probe3Temp,             "Probe 3 Temp",                      temperatureProbeReading.1.3,  "2 second", 0.1, 0.0,   C,   -7,    3,   40,   47,    MAJOR,    MINOR,    MINOR,    MAJOR}
+}
+

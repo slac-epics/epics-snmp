@@ -1,0 +1,22 @@
+
+file apc_pdu_common.db {
+{none}
+}
+
+file apc_pdu_outlet.db {
+pattern
+{N}
+{1}
+{2}
+{3}
+{4}
+{5}
+{6}
+{7}
+{8}
+}
+
+file misc_common.template {
+{none}
+}
+

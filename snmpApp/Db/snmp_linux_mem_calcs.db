@@ -1,0 +1,53 @@
+
+#--- Memory calcs ------------------------------
+record(calc, "$(P):MemCalc1") {
+    field(DESC, "Free memory calc")
+    field(ASG,  "Internal")
+    field(INPA, "$(P):MemAvail MS")
+    field(INPB, "$(P):MemCached MS")
+    field(INPC, "$(P):MemBuffered MS")
+    field(CALC, "A+B+C")
+    field(SCAN, "1 second")
+    field(FLNK, "$(P):MemCalc2")
+}
+
+record(calc, "$(P):MemCalc2") {
+    field(DESC, "Free memory calc")
+    field(ASG,  "Internal")
+    field(INPA, "$(P):MemCalc1 MS")
+    field(INPB, "$(P):MemTotal MS")
+    field(CALC, "(A/B)*100")
+    field(FLNK, "$(P):MemFreekB")
+}
+
+record(longin, "$(P):MemFreekB") {
+    field(DESC, "Free memory, inc. buff./cached")
+    field(INP,  "$(P):MemCalc1 MS")
+    field(EGU,  "kB")
+    field(LOLO, "500000")
+    field(LOW,  "800000")
+    field(HIGH, "")
+    field(HIHI, "")
+    field(LLSV, "MAJOR")
+    field(LSV,  "MINOR")
+    field(HSV,  "NO_ALARM")
+    field(HHSV, "NO_ALARM")
+    field(FLNK, "$(P):MemFree")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV")
+}
+
+record(longin, "$(P):MemFree") {
+    field(DESC, "Free memory, inc. buff./cached")
+    field(INP,  "$(P):MemCalc2 MS")
+    field(EGU,  "%")
+    field(LOLO, "10")
+    field(LOW,  "20")
+    field(HIGH, "")
+    field(HIHI, "")
+    field(LLSV, "MAJOR")
+    field(LSV,  "MINOR")
+    field(HSV,  "NO_ALARM")
+    field(HHSV, "NO_ALARM")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV PREC")
+}
+

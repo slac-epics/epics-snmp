@@ -1,0 +1,67 @@
+#==============================================================================
+#
+# Abs:  Database template for SNMP monitored test/dev crates in SPEAR
+#		Provides info such as device names in slots and crate locations
+# 
+# Name:  crat.substitutions
+#
+# Macros:
+#       P         Crate Name (<bldg #>-<crate type><crate #>)
+#       slotloc   Location of crate (B<bldg #>-<optional room #>-<rack #>-<elev #>)
+#       slotname  Names of devices in slot 1 through slot n
+#
+#==============================================================================
+#
+
+# VME Crates
+
+file crat_loc_test.template {
+  pattern {	P,			slotloc			}
+  
+# wiener 7 slot crates
+		  
+# wiener 9 slot crates
+		  { SPEARVME1, 	"B117-10-26"	}
+# wiener 21 slot crates		  
+  
+}  
+
+file crat_slot_test.template {
+  pattern {	P,			slotnum,	slotname 			}
+  
+# wiener 7 slot crates
+		  
+# wiener 9 slot crates		  
+		  { SPEARVME1, 	1,			"IOCSPEAR5"	        }
+		  { SPEARVME1, 	2, 			""    				}
+		  { SPEARVME1, 	3, 			""			        }
+		  { SPEARVME1, 	4, 			""              	}
+		  { SPEARVME1, 	5, 			""			        }
+		  { SPEARVME1, 	6, 			""					}
+		  { SPEARVME1, 	7, 			""  				}
+		  { SPEARVME1, 	8, 			""  				}
+		  { SPEARVME1, 	9, 			""	                }
+		  
+# wiener 21 slot crates	
+          { SPEARVME2, 	1, 			"IOCSPEAR2"	}
+		  { SPEARVME2, 	2, 			""					}
+		  { SPEARVME2, 	3, 			""  				}
+		  { SPEARVME2, 	4, 			"VTR10012 Dgtzr"	}
+		  { SPEARVME2, 	5, 			"" 	                }
+		  { SPEARVME2, 	6, 			""    				}
+		  { SPEARVME2, 	7, 			"VTR812 Dgtzr"      }
+		  { SPEARVME2, 	8, 			""    				}
+		  { SPEARVME2, 	9, 			""    				}
+		  { SPEARVME2, 	10, 		"VTR10012 Dgtzr"	}
+		  { SPEARVME2, 	11, 		""     				}
+		  { SPEARVME2, 	12, 		""     				}
+		  { SPEARVME2, 	13, 		"VTR10012 Dgtzr"	}
+		  { SPEARVME2, 	14, 		""     				}
+		  { SPEARVME2, 	15, 		"IOCSPEAR6"         }
+		  { SPEARVME2, 	16, 		"VTR10012 Dgtzr"	}
+		  { SPEARVME2, 	17, 		"" 					}
+		  { SPEARVME2, 	18, 		""     				}
+		  { SPEARVME2, 	19, 		"VTR10012 Dgtzr"	}
+		  { SPEARVME2, 	20, 		""  				}
+		  { SPEARVME2, 	21, 		"VTR10012 Dgtzr"	}  		  
+}

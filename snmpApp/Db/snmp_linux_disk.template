@@ -1,0 +1,63 @@
+
+#--- Process watchdog ------------------------------
+#
+#  Macros required:
+#     P: PV prefix
+#     N: proc entry in snmpd.conf file. First entry is 1, second is 2, etc.
+#     HOST: SNMP host IP address or hostname
+#     SCAN: Record scan period
+#  Environment variable required (set in st.cmd):
+#     COMM: SNMP community, e.g. "public"
+#
+
+record(stringin, "$(P):Disk$(N)Path") {
+    field(DESC, "Disk $(N) path")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) UCD-SNMP-MIB::dskPath.$(ID) $(MASK1="STRING:") 100")
+    field(SCAN, "$(SCAN="10 second")")
+    field(FLNK, "$(P):Disk$(N)Dev")
+}
+
+record(stringin, "$(P):Disk$(N)Dev") {
+    field(DESC, "Disk $(N) device")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) UCD-SNMP-MIB::dskDevice.$(ID) $(MASK2="STRING:") 100")
+    field(SCAN, "$(SCAN="10 second")")
+    field(FLNK, "$(P):Disk$(N)Use")
+}
+
+record(longin, "$(P):Disk$(N)Use") {
+    field(DESC, "Disk $(N) use")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) UCD-SNMP-MIB::dskPercent.$(ID) $(MASK3="INTEGER:") 100")
+    field(EGU,  "$(EGU="%")")
+    field(LOLO, "$(LOLO="")")
+    field(LOW,  "$(LOW="")")
+    field(HIGH, "$(HIGH="85")")
+    field(HIHI, "$(HIHI="90")")
+    field(LLSV, "$(LLSV=NO_ALARM)")
+    field(LSV,  "$(LSV=NO_ALARM)")
+    field(HSV,  "$(HSV=MINOR)")
+    field(HHSV, "$(HHSV=MAJOR)")
+    field(FLNK, "$(P):Disk$(N)ErrFlagRaw")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV")
+}
+
+record(longin, "$(P):Disk$(N)ErrFlagRaw") {
+    field(DESC, "Disk $(N) error flag")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) UCD-SNMP-MIB::dskErrorFlag.$(ID) $(MASK4="(") 100")
+    field(FLNK, "$(P):Disk$(N)ErrFlag")
+}
+
+record(bi, "$(P):Disk$(N)ErrFlag") {
+    field(DESC, "Disk $(N) error flag")
+    field(INP,  "$(P):Disk$(N)ErrFlagRaw")
+    field(ZNAM, "$(ZNAM="OK")")
+    field(ONAM, "$(ONAM="Error")")
+    field(ZSV,  "$(ZSV=NO_ALARM)")
+    field(OSV,  "$(OSV=MAJOR)")
+    info(autosaveFields, "ZSV OSV")
+}
+
+

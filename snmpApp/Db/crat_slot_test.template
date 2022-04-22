@@ -1,0 +1,10 @@
+# Crate slot
+# scondam: 21-Aug-2017: Initialize the slot record names from substitutions file.
+#                       Save restore slotname names from RDB.
+
+record(stringin, "$(P)_t:$(slotnum)NAME") {
+  field(PINI, "YES")
+  field(VAL, "$(slotname)")
+#  info(autosaveFields,"VAL")
+}
+

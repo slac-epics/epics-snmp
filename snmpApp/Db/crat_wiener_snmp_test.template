@@ -1,0 +1,835 @@
+#
+#  Basic PVs for a Wiener crate monitor
+#
+#  Macros required:
+#     P,R   : PV prefixes
+#     CRATE : SNMP host IP address (dotted decimal)
+#  Environment variable required (set in st.cmd):
+#     WCR_PREF="guru WIENER-CRATE-MIB::"
+#   
+#
+
+#--- Power, Reset -------------------------------------------------------
+record(bo, "$(P)_t:POWEROFF") {
+    field(HIGH, "9")
+    field(FLNK, "$(P)_t:MAINPOWER_off")
+}
+
+record(longout, "$(P)_t:MAINPOWER_offval") {
+    field(VAL,  "0")
+    field(PINI, "1")
+}
+
+record(longout, "$(P)_t:MAINPOWER_off") {
+    field(DTYP, "Snmp")
+    field(OUT,  "@$(CRATE) %(WCR_PREF)sysMainSwitch.0 ( 100 i")
+    field(DOL,  "$(P)_t:MAINPOWER_offval")
+    field(OMSL, "closed_loop")
+    field(FLNK, "$(P)_t:POWERMSGCALC")
+}
+
+record(bo, "$(P)_t:POWERON") {
+    field(HIGH, "9")
+    field(FLNK, "$(P)_t:MAINPOWER_on")
+}
+
+record(longout, "$(P)_t:MAINPOWER_onval") {
+    field(VAL,  "1")
+    field(PINI, "1")
+}
+
+record(longout, "$(P)_t:MAINPOWER_on") {
+    field(DTYP, "Snmp")
+    field(OUT,  "@$(CRATE) %(WCR_PREF)sysMainSwitch.0 ( 100 i")
+    field(DOL,  "$(P)_t:MAINPOWER_onval")
+    field(OMSL, "closed_loop")
+    field(FLNK, "$(P)_t:POWERMSGCALC")
+}
+
+record(longin, "$(P)_t:POWERSTATE_set")
+{
+    field(DESC, "Supply off/on status")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sysMainSwitch.0 ( 100 i")
+    field(SCAN, "2 second")
+    field(FLNK, "$(P)_t:POWERSTATE")
+}
+
+record(bi, "$(P)_t:POWERSTATE")
+{
+    field(DESC, "Supply off/on status")
+    field(INP,  "$(P)_t:POWERSTATE_set")
+    field(ZNAM, "OFF")
+    field(ONAM, "ON")
+    field(ZSV,  "MAJOR")
+    field(OSV,  "NO_ALARM")
+}
+
+record(longin, "$(P)_t:SYSSTATUS")
+{
+    field(DESC, "Status")
+    field(SCAN, "2 second")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sysStatus.0 ( 100 i")
+}
+
+record(bo, "$(P)_t:VMERESET") {
+    field(DESC, "VME SYSRESET")
+    field(HIGH, "9")
+    field(FLNK, "$(P)_t:VMERESET_set")
+}
+
+record(longout, "$(P)_t:VMERESET_val") {
+    field(DESC, "VME SYSRESET")
+    field(VAL,  "1")
+    field(PINI, "1")
+}
+
+record(longout, "$(P)_t:VMERESET_set")
+{
+    field(DESC, "VME SYSRESET")
+    field(DTYP, "Snmp")
+    field(OUT,  "@$(CRATE) %(WCR_PREF)sysVmeSysReset.0 INTEGER: 100 i")
+    field(DOL,  "$(P)_t:VMERESET_val")
+    field(OMSL, "closed_loop")
+    field(FLNK, "$(P)_t:POWERMSGCALC")
+}
+
+record(bo, "$(P)_t:HARDWARERESET") {
+    field(DESC, "VME HARDWARERESET")
+    field(HIGH, "9")
+    field(FLNK, "$(P)_t:HARDWARERESET_set")
+}
+
+record(longout, "$(P)_t:HARDWARERESET_val") {
+    field(DESC, "VME HARDWARERESET")
+    field(VAL,  "1")
+    field(PINI, "1")
+}
+
+record(longout, "$(P)_t:HARDWARERESET_set")
+{
+    field(DESC, "VME HARDWARERESET")
+    field(DTYP, "Snmp")
+    field(OUT,  "@$(CRATE) %(WCR_PREF)sysHardwareReset.0 INTEGER: 100 i")
+    field(DOL,  "$(P)_t:HARDWARERESET_val")
+    field(OMSL, "closed_loop")
+    field(FLNK, "$(P)_t:POWERMSGCALC")
+}
+
+record(seq, "$(P)_t:HARDRESETSEQ") {
+  field(SELM, "All")
+  field(LNK1, "$(P)_t:POWEROFF PP")
+  field(DOL1, "1")
+  field(DLY2, "10")
+  field(DOL2, "1")
+  field(LNK2, "$(P)_t:POWERON PP")
+  field(DLY3, "10")
+  field(DOL3, "0")
+  field(LNK3, "$(P)_t:HARDRESET PP")
+}
+
+record(bo, "$(P)_t:HARDRESET") {
+  field(OUT, "$(P)_t:HARDRESETSEQ.PROC PP")
+  field(FLNK, "$(P)_t:POWERMSGCALC")
+}
+
+record(calc, "$(P)_t:POWERMSGCALC") {
+  field(INPA, "$(P)_t:POWEROFF")
+  field(INPB, "$(P)_t:POWERON")
+  field(INPC, "$(P)_t:HARDRESET")
+  field(INPD, "$(P)_t:VMERESET")
+  field(INPE, "$(P)_t:HARDWARERESET")
+#  field(CALC, "C?3:D?5:E?6:A=1&&B=0?0:A=0&&B=1?1:A=1&&B=1?2:4")
+  field(CALC, "A?0:B?1:A=1&&B=1?2:C?3:D?5:E?6:4")  
+  field(FLNK, "$(P)_t:POWERMSG")
+  field(PINI, "1")
+}
+
+record(mbbi, "$(P)_t:POWERMSG") {
+  field(INP, "$(P)_t:POWERMSGCALC.VAL")
+  field(ZRST, "TURNING_OFF")
+  field(ONST, "TURNING_ON")
+  field(TWST, "ERROR")
+  field(THST, "HARD_RESETTING")
+  field(FRST, " ")
+  field(FVST, "SYS_RESETTING")
+  field(SXST, "HW_RESETTING")
+  field(ZRSV, "MINOR")
+  field(ONSV, "MINOR")
+  field(TWSV, "MAJOR")
+  field(THSV, "MINOR")
+  field(FRSV, "NO_ALARM")
+  field(FVSV, "MINOR")
+  field(SXSV, "MINOR")
+}
+
+#--- Names --------------------------------------------------------
+record(seq, "$(P)_t:NAME_readSeq")
+{
+    field(DESC, "Read chan names")
+    field(LNK1, "$(P)_t:CHU0_NAME.PROC")
+    field(LNK2, "$(P)_t:CHU1_NAME.PROC")
+    field(LNK3, "$(P)_t:CHU3_NAME.PROC")
+    field(LNK4, "$(P)_t:CHU5_NAME.PROC")
+    field(SCAN, "2 second")
+}
+
+record(stringin, "$(P)_t:CHU0_NAME")
+{
+    field(DESC, "Chan. U0 name")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputName.u0 STRING: 100")
+}
+
+record(stringin, "$(P)_t:CHU1_NAME")
+{
+    field(DESC, "Chan. U1 name")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputName.u1 STRING: 100")
+}
+
+record(stringin, "$(P)_t:CHU3_NAME")
+{
+    field(DESC, "Chan. U3 name")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputName.u3 STRING: 100")
+}
+
+record(stringin, "$(P)_t:CHU5_NAME")
+{
+    field(DESC, "Chan. U5 name")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputName.u5 STRING: 100")
+}
+
+#--- Status --------------------------------------------------------
+record(seq, "$(P)_t:STATUS_readSeq")
+{
+    field(DESC, "Read chan status")
+    field(LNK1, "$(P)_t:CHU0_STATUS_raw.PROC")
+    field(LNK2, "$(P)_t:CHU1_STATUS_raw.PROC")
+    field(LNK3, "$(P)_t:CHU3_STATUS_raw.PROC")
+    field(LNK4, "$(P)_t:CHU5_STATUS_raw.PROC")
+    field(SCAN, "2 second")
+}
+
+record(longin, "$(P)_t:CHU0_STATUS_raw")
+{
+    field(DESC, "Chan. U0 status raw")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputStatus.u0 BITS: 100")
+    field(FLNK, "$(P)_t:CHU0_STATUS")
+}
+
+record(mbbi, "$(P)_t:CHU0_STATUS")
+{
+    field(DESC, "Chan. U0 status")
+    field(DTYP, "Raw Soft Channel")
+    field(INP,  "$(P)_t:CHU0_STATUS_raw")
+    field(ZRVL, "80")
+    field(ONVL, "20")
+    field(ZRST, "OK")
+    field(ONST, "FAULT (2)")
+    field(ONSV, "MAJOR")
+    field(UNSV, "MINOR")
+}
+
+record(longin, "$(P)_t:CHU1_STATUS_raw")
+{
+    field(DESC, "Chan. U1 status raw")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputStatus.u1 BITS: 100")
+    field(FLNK, "$(P)_t:CHU1_STATUS")
+}
+
+record(mbbi, "$(P)_t:CHU1_STATUS")
+{
+    field(DESC, "Chan. U1 status")
+    field(DTYP, "Raw Soft Channel")
+    field(INP,  "$(P)_t:CHU1_STATUS_raw")
+    field(ZRVL, "80")
+    field(ONVL, "20")
+    field(ZRST, "OK")
+    field(ONST, "FAULT (2)")
+    field(ONSV, "MAJOR")
+    field(UNSV, "MINOR")
+}
+
+record(longin, "$(P)_t:CHU3_STATUS_raw")
+{
+    field(DESC, "Chan. U3 status raw")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputStatus.u3 BITS: 100")
+    field(FLNK, "$(P)_t:CHU3_STATUS")
+}
+
+record(mbbi, "$(P)_t:CHU3_STATUS")
+{
+    field(DESC, "Chan. U3 status")
+    field(DTYP, "Raw Soft Channel")
+    field(INP,  "$(P)_t:CHU3_STATUS_raw")
+    field(ZRVL, "80")
+    field(ONVL, "20")
+    field(ZRST, "OK")
+    field(ONST, "FAULT (2)")
+    field(ONSV, "MAJOR")
+    field(UNSV, "MINOR")
+}
+
+record(longin, "$(P)_t:CHU5_STATUS_raw")
+{
+    field(DESC, "Chan. U5 status raw")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputStatus.u5 BITS: 100")
+    field(FLNK, "$(P)_t:CHU5_STATUS")
+}
+
+record(mbbi, "$(P)_t:CHU5_STATUS")
+{
+    field(DESC, "Chan. U5 status")
+    field(DTYP, "Raw Soft Channel")
+    field(INP,  "$(P)_t:CHU5_STATUS_raw")
+    field(ZRVL, "80")
+    field(ONVL, "20")
+    field(ZRST, "OK")
+    field(ONST, "FAULT (2)")
+    field(ONSV, "MAJOR")
+    field(UNSV, "MINOR")
+}
+
+#--- Voltages -----------------------------------------------------
+record(seq, "$(P)_t:V_readSeq")
+{
+    field(DESC, "Read crate voltages")
+    field(LNK1, "$(P)_t:CHU0_V.PROC")
+    field(LNK2, "$(P)_t:CHU1_V.PROC")
+    field(LNK3, "$(P)_t:CHU3_V.PROC")
+    field(LNK4, "$(P)_t:CHU5_V.PROC")
+    field(SCAN, "2 second")
+}
+
+record(ai, "$(P)_t:CHU0_V")
+{
+    field(DESC, "Chan. U0 Voltage")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputMeasurementSenseVoltage.u0 Float: 100")
+    field(EGU,  "V")
+    field(PREC, "3")
+    field(LOW,  "4.8")
+    field(HIGH, "5.2")
+    field(LOLO, "4.6")
+    field(HIHI, "5.4")
+    field(LSV,  "MINOR")
+    field(HSV,  "MINOR")
+    field(LLSV, "MAJOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "0.2")
+}
+
+record(ai, "$(P)_t:CHU1_V")
+{
+    field(DESC, "Chan. U1 Voltage")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputMeasurementSenseVoltage.u1 Float: 100")
+    field(EGU,  "V")
+    field(PREC, "3")
+    field(LOW,  "11.8")
+    field(HIGH, "12.2")
+    field(LOLO, "11.6")
+    field(HIHI, "12.4")
+    field(LSV,  "MINOR")
+    field(HSV,  "MINOR")
+    field(LLSV, "MAJOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "0.2")
+}
+
+record(ai, "$(P)_t:CHU3_V")
+{
+    field(DESC, "Chan. U3 Voltage")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputMeasurementSenseVoltage.u3 Float: 100")
+    field(EGU,  "V")
+    field(PREC, "3")
+    field(LOW,  "3.1")
+    field(HIGH, "3.5")
+    field(LOLO, "2.9")
+    field(HIHI, "3.7")
+    field(LSV,  "MINOR")
+    field(HSV,  "MINOR")
+    field(LLSV, "MAJOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "0.2")
+}
+
+record(ai, "$(P)_t:CHU5_V")
+{
+    field(DESC, "Chan. U5 Voltage")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputMeasurementSenseVoltage.u5 Float: 100")
+    field(EGU,  "V")
+    field(PREC, "3")
+    field(LOW,  "11.8")
+    field(HIGH, "12.2")
+    field(LOLO, "11.6")
+    field(HIHI, "12.4")
+    field(LSV,  "MINOR")
+    field(HSV,  "MINOR")
+    field(LLSV, "MAJOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "0.2")
+}
+
+#--- Currents -----------------------------------------------------
+record(seq, "$(P)_t:I_readSeq")
+{
+    field(DESC, "Read crate currents")
+    field(LNK1, "$(P)_t:CHU0_I.PROC")
+    field(LNK2, "$(P)_t:CHU1_I.PROC")
+    field(LNK3, "$(P)_t:CHU3_I.PROC")
+    field(LNK4, "$(P)_t:CHU5_I.PROC")
+    field(SCAN, "2 second")
+}
+
+record(ai, "$(P)_t:CHU0_I")
+{
+    field(DESC, "Chan. U0 Current")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputMeasurementCurrent.u0 Float: 100")
+    field(EGU,  "A")
+    field(PREC, "3")
+}
+
+record(ai, "$(P)_t:CHU1_I")
+{
+    field(DESC, "Chan. U1 Current")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputMeasurementCurrent.u1 Float: 100")
+    field(EGU,  "A")
+    field(PREC, "3")
+}
+
+record(ai, "$(P)_t:CHU3_I")
+{
+    field(DESC, "Chan. U3 Current")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputMeasurementCurrent.u3 Float: 100")
+    field(EGU,  "A")
+    field(PREC, "3")
+}
+
+record(ai, "$(P)_t:CHU5_I")
+{
+    field(DESC, "Chan. U5 Current")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)outputMeasurementCurrent.u5 Float: 100")
+    field(EGU,  "A")
+    field(PREC, "3")
+}
+
+#--- Temps -----------------------------------------------------
+record(seq, "$(P)_t:TEMP_readSeq")
+{
+    field(DESC, "Read crate temperatures")
+    field(LNK1, "$(P)_t:TEMP1_RAW.PROC")
+    field(LNK2, "$(P)_t:TEMP2_RAW.PROC")
+    field(LNK3, "$(P)_t:TEMP3_RAW.PROC")
+    field(LNK4, "$(P)_t:TEMP4_RAW.PROC")
+    field(LNK5, "$(P)_t:TEMP5_RAW.PROC")
+    field(LNK6, "$(P)_t:TEMP6_RAW.PROC")
+    field(LNK7, "$(P)_t:TEMP7_RAW.PROC")
+    field(LNK8, "$(P)_t:TEMP8_RAW.PROC")
+    field(SCAN, "2 second")
+}
+
+record(ai, "$(P)_t:TEMP1_RAW")
+{
+    field(DESC, "Temperarature sensor 1")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sensorTemperature.temp1 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:TEMP1")
+}
+
+record(calc, "$(P)_t:TEMP1")
+{
+    field(DESC, "Set fan speed faster")
+    field(INPA, "$(P)_t:TEMP1_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(HIGH, "$(thigh)")
+    field(HIHI, "$(thihi)")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+record(ai, "$(P)_t:TEMP2_RAW")
+{
+    field(DESC, "Temperarature sensor 2")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sensorTemperature.temp2 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:TEMP2")
+}
+
+record(calc, "$(P)_t:TEMP2")
+{
+    field(DESC, "Temperarature sensor 2")
+    field(INPA, "$(P)_t:TEMP2_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(HIGH, "$(thigh)")
+    field(HIHI, "$(thihi)")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+record(ai, "$(P)_t:TEMP3_RAW")
+{
+    field(DESC, "Temperarature sensor 3")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sensorTemperature.temp3 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:TEMP3")
+}
+
+record(calc, "$(P)_t:TEMP3")
+{
+    field(DESC, "Temperarature sensor 3")
+    field(INPA, "$(P)_t:TEMP3_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(HIGH, "$(thigh)")
+    field(HIHI, "$(thihi)")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+record(ai, "$(P)_t:TEMP4_RAW")
+{
+    field(DESC, "Temperarature sensor 4")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sensorTemperature.temp4 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:TEMP4")
+}
+
+record(calc, "$(P)_t:TEMP4")
+{
+    field(DESC, "Temperarature sensor 4")
+    field(INPA, "$(P)_t:TEMP4_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(HIGH, "$(thigh)")
+    field(HIHI, "$(thihi)")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+record(ai, "$(P)_t:TEMP5_RAW")
+{
+    field(DESC, "Temperarature sensor 5")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sensorTemperature.temp5 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:TEMP5")
+}
+
+record(calc, "$(P)_t:TEMP5")
+{
+    field(DESC, "Temperarature sensor 5")
+    field(INPA, "$(P)_t:TEMP5_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(HIGH, "$(thigh)")
+    field(HIHI, "$(thihi)")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+record(ai, "$(P)_t:TEMP6_RAW")
+{
+    field(DESC, "Temperarature sensor 6")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sensorTemperature.temp6 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:TEMP6")
+}
+
+record(calc, "$(P)_t:TEMP6")
+{
+    field(DESC, "Temperarature sensor 6")
+    field(INPA, "$(P)_t:TEMP6_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(HIGH, "$(thigh)")
+    field(HIHI, "$(thihi)")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+record(ai, "$(P)_t:TEMP7_RAW")
+{
+    field(DESC, "Temperarature sensor 7")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sensorTemperature.temp7 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:TEMP7")
+}
+
+record(calc, "$(P)_t:TEMP7")
+{
+    field(DESC, "Temperarature sensor 7")
+    field(INPA, "$(P)_t:TEMP7_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(HIGH, "$(thigh)")
+    field(HIHI, "$(thihi)")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+record(ai, "$(P)_t:TEMP8_RAW")
+{
+    field(DESC, "Temperarature sensor 8")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)sensorTemperature.temp8 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:TEMP8")
+}
+
+record(calc, "$(P)_t:TEMP8")
+{
+    field(DESC, "Temperarature sensor 8")
+    field(INPA, "$(P)_t:TEMP8_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(HIGH, "$(thigh)")
+    field(HIHI, "$(thihi)")
+    field(HSV,  "MINOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+#--- Fans -----------------------------------------------------
+record(seq, "$(P)_t:FAN_readSeq")
+{
+    field(DESC, "Read fan speeds")
+    field(LNK1, "$(P)_t:FANSPEED_ACT.PROC")
+    field(LNK2, "$(P)_t:FANSPEED.PROC")
+    field(LNK3, "$(P)_t:FANTEMP_RAW.PROC")
+    field(SCAN, "2 second")
+}
+
+record(ai, "$(P)_t:FANSPEED_ACT")
+{
+    field(DESC, "Fan 1 actual speed")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)fanSpeed.1 INTEGER: 100")
+    field(EGU,  "RPM")
+    field(PREC, "0")
+    field(LOW,  "1500")
+    field(HIGH, "4500")
+    field(LOLO, "2000")
+    field(HIHI, "5000")
+    field(LSV,  "MINOR")
+    field(HSV,  "MINOR")
+    field(LLSV, "MAJOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "200")
+}
+
+record(ai, "$(P)_t:FANSPEED")
+{
+    field(DESC, "Fan speed set point")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)fanNominalSpeed.0 INTEGER: 100")
+    field(EGU,  "RPM")
+    field(PREC, "0")
+    field(LOW,  "1500")
+    field(HIGH, "4500")
+    field(LOLO, "2000")
+    field(HIHI, "5000")
+    field(LSV,  "MINOR")
+    field(HSV,  "MINOR")
+    field(LLSV, "MAJOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "200")
+}
+
+record(longout, "$(P)_t:FANSPEED_set")
+{
+    field(DESC, "Set speed of all fans")
+    field(DTYP, "Snmp")
+    field(OUT,  "@$(CRATE) %(WCR_PREF)fanNominalSpeed.0 INTEGER: 100 i")
+    field(EGU,  "RPM")
+    field(LOPR, "1200")
+    field(DRVL, "1200")
+    field(HOPR, "3600")
+    field(DRVH, "3600")
+}
+
+record(longin, "$(P)_t:FANFASTER")
+{
+    field(DESC, "Process calc record")
+    field(FLNK, "$(P)_t:FANFASTER_calc")
+}
+
+record(calcout, "$(P)_t:FANFASTER_calc")
+{
+    field(DESC, "Set fan speed faster")
+    field(INPA, "$(P)_t:FANSPEED")
+    field(INPB, "50")
+    field(CALC, "A+B")
+    field(OUT,  "$(P)_t:FANSPEED_set PP")
+    field(FLNK, "$(P)_t:FANSPEED")
+}
+
+record(longin, "$(P)_t:FANSLOWER")
+{
+    field(DESC, "Process calc record")
+    field(FLNK, "$(P)_t:FANSLOWER_calc")
+}
+
+record(calcout, "$(P)_t:FANSLOWER_calc")
+{
+    field(DESC, "Set fan speed slower")
+    field(INPA, "$(P)_t:FANSPEED")
+    field(INPB, "50")
+    field(CALC, "A-B")
+    field(OUT,  "$(P)_t:FANSPEED_set PP")
+    field(FLNK, "$(P)_t:FANSPEED")
+}
+
+record(ai, "$(P)_t:FANTEMP_RAW")
+{
+    field(DESC, "Fan air temperature")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)fanAirTemperature.0 INTEGER: 100")
+    field(EGU,  "DegC")
+    field(FLNK, "$(P)_t:FANTEMP")
+}
+
+record(calc, "$(P)_t:FANTEMP")
+{
+    field(DESC, "Fan air temperature")
+    field(INPA, "$(P)_t:FANTEMP_RAW")
+    field(CALC, "A>0?A*$(tdiv)+$(toff):0")
+    field(EGU,  "$(tegu)")
+    field(PREC, "0")
+    field(LOW,  "-1")
+    field(HIGH, "55")
+    field(LOLO, "-1")
+    field(HIHI, "60")
+    field(LSV,  "MINOR")
+    field(HSV,  "MINOR")
+    field(LLSV, "MAJOR")
+    field(HHSV, "MAJOR")
+    field(HYST, "4")
+}
+
+#--- Misc. -------------------------------------------------
+record(longin, "$(P)_t:SUPPLY_OPTIME_SEC")
+{
+    field(DESC, "Supply operating time")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)psOperatingTime.0 INTEGER: 100")
+    field(EGU,  "s")
+    field(SCAN, "10 second")
+    field(FLNK, "$(P)_t:SUPPLY_OPTIME")
+}
+
+record(calc, "$(P)_t:SUPPLY_OPTIME")
+{
+    field(DESC, "Supply operating time")
+    field(INPA, "$(P)_t:SUPPLY_OPTIME_SEC")
+    field(CALC, "A/3600")
+    field(EGU,  "hrs.")
+    field(PREC, "0")
+}
+
+record(stringin, "$(P)_t:SUPPLY_SN")
+{
+    field(DESC, "Supply serial number")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF)psSerialNumber.0 STRING: 100 s")
+    field(SCAN, "10 second")
+}
+
+record(stringin, "$(P)_t:FIRMWARE")
+{
+    field(DESC, "Crate firmware")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF2)sysDescr.0 ( 100 s")
+    field(SCAN, "10 second")
+}
+
+record(stringin, "$(P)_t:FIRMWARE2")
+{
+    field(DESC, "Crate firmware")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF2)sysDescr.0 , 100 s")
+    field(SCAN, "10 second")
+}
+
+record(waveform, "$(P)_t:FWVERSION")
+{
+    field(DESC, "Crate firmware")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(CRATE) %(WCR_PREF2)sysDescr.0 _ 256 s")
+    field(SCAN, "10 second")
+    field(FTVL, "CHAR")
+    field(NELM, "256")
+}
+
+#--- Alarm summaries --------------------------------
+
+record(calc, "$(P)_t:TEMPSUM") {
+  field(DESC, "Temperature alarm summary")
+  field(CALC, "A+B+C+D+E+F+G+H")
+  field(INPA, "$(P)_t:TEMP1.SEVR NPP MS")
+  field(INPB, "$(P)_t:TEMP2.SEVR NPP MS")
+  field(INPC, "$(P)_t:TEMP3.SEVR NPP MS")
+  field(INPD, "$(P)_t:TEMP4.SEVR NPP MS")
+  field(INPE, "$(P)_t:TEMP5.SEVR NPP MS")
+  field(INPF, "$(P)_t:TEMP6.SEVR NPP MS")
+  field(INPG, "$(P)_t:TEMP7.SEVR NPP MS")
+  field(INPH, "$(P)_t:TEMP8.SEVR NPP MS")
+  field(SCAN, "1 second")
+}
+
+# scondam: 14-Sept-2017: Remove from Snmp app as these are causing duplicate PVs. 
+# The STATSUMY PV alredy exists in ALH app for 'ntwk'
+# record(calc, "$(P)_t:STATSUMY") {
+#   field(DESC, "Alarm summary for crate")
+#   field(INPA, "$(P)_t:FWVERSION.SEVR NPP MS")
+#   field(INPB, "$(P)_t:TEMPSUM.SEVR NPP MS")
+#   field(INPC, "$(P)_t:CHU0_V.SEVR NPP MS")
+#   field(INPD, "$(P)_t:CHU1_V.SEVR NPP MS")
+#   field(INPE, "$(P)_t:CHU3_V.SEVR NPP MS")
+#   field(INPF, "$(P)_t:CHU5_V.SEVR NPP MS")
+#   field(INPG, "$(P)_t:FANSPEED.SEVR NPP MS")
+#   field(SCAN, "1 second")
+#   field(CALC, "A+B+C+D+E+F+G")
+# }
+
+
+
+
+

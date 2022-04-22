@@ -1,0 +1,48 @@
+#
+#  Template for snmp interface
+#
+#  Macros required:
+#     P: PV prefix
+#     HOST: SNMP host IP address or hostname
+#     ATTR: PV attribute
+#     OID: SNMP OID for parameter of interest
+#     DESC: PV desc.
+#     SCAN: Record scan period
+#  Environment variable required (set in st.cmd):
+#     COMM: SNMP community, e.g. "public"
+#
+# This is needed because this driver does not directly support mbbi/mbbo
+
+record(mbbo, "$(P):$(ATTR)") {
+    field(DESC, "$(DESC="")")
+    field(ZRVL, "$(ZRVL=0)")
+    field(ZRST, "$(ZRST=0)")
+    field(ZRSV, "$(ZRSV=NO_ALARM)")
+    field(ONVL, "$(ONVL=1)")
+    field(ONST, "$(ONST=1)")
+    field(ONSV, "$(ONSV=NO_ALARM)")
+    field(TWVL, "$(TWVL=2)")
+    field(TWST, "$(TWST=2)")
+    field(TWSV, "$(TWSV=NO_ALARM)")
+    field(THVL, "$(THVL=3)")
+    field(THST, "$(THST=3)")
+    field(THSV, "$(THSV=NO_ALARM)")
+    field(FRVL, "$(FRVL=4)")
+    field(FRST, "$(FRST=4)")
+    field(FRSV, "$(FRSV=NO_ALARM)")
+    field(FVVL, "$(FVVL=5)")
+    field(FVST, "$(FVST=5)")
+    field(FVSV, "$(FVSV=NO_ALARM)")
+    field(SXVL, "$(SXVL=6)")
+    field(SXST, "$(SXST=6)")
+    field(SXSV, "$(SXSV=NO_ALARM)")
+    field(OUT,  "$(P):$(ATTR)Raw PP")
+}
+
+record(longout, "$(P):$(ATTR)Raw") {
+    field(DESC, "$(DESC="")")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(OUT,  "@$(HOST) %(COMM) $(OID) $(MASK="INTEGER:") $(LEN=100) $(FLAGS=i)")
+}
+

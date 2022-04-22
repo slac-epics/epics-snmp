@@ -1,0 +1,157 @@
+#==============================================================================
+#
+# Abs:  Database template for SNMP monitored crates in SPEAR
+#		Provides info such as device names in slots and crate locations
+# 
+# Name:  crat.substitutions
+#
+# Macros:
+#       P         Crate Name (<bldg #>-<crate type><crate #>)
+#       slotloc   Location of crate (B<bldg #>-<optional room #>-<rack #>-<elev #>)
+#       slotname  Names of devices in slot 1 through slot n
+#
+#==============================================================================
+#
+
+# VME Crates
+
+file crat_loc.template {
+  pattern {	P,			slotloc			}
+  
+# wiener 7 slot crates
+          { 120-VME1,	"B120-1006-29"	}  
+		  
+# wiener 9 slot crates
+		  { 131-VME1, 	"B131-1305-16"	}
+		  { 131-VME2, 	"B131-602-24"	}
+
+# wiener 21 slot crates	
+          { 140-VME1, 	"B140-111-24"	}
+          { 140-VME2, 	"B116-101-3"	}
+          { 140-VME3, 	"B140-321-20"   }	
+          { 140-VME4, 	"B140-106-20"	}		  	  
+  
+}  
+
+file crat_slot.template {
+  pattern {	P,			slotnum,	slotname 			}
+  
+# wiener 7 slot crates
+          { 120-VME1,	1,			"B120-IOCMOTOR1"	}
+		  { 120-VME1,	2,			""    				}
+		  {	120-VME1,	3,			"MAXv-8000"			}
+		  { 120-VME1,	4,			"Acro IP Carrier" 	}
+		  { 120-VME1,	5, 			""					}
+		  { 120-VME1,	6,			"SSI 505F"			}
+		  { 120-VME1,	7, 			""					}
+		  
+# wiener 9 slot crates		  
+		  { 131-VME1, 	1,			"Acro IP Carrier"	}
+		  { 131-VME1, 	2, 			""    				}
+		  { 131-VME1, 	3, 			"SSI 505F"			}
+		  { 131-VME1, 	4, 			"SSI 505F"        	}
+		  { 131-VME1, 	5, 			"MAXv-8000"			}
+		  { 131-VME1, 	6, 			""					}
+		  { 131-VME1, 	7, 			""  				}
+		  { 131-VME1, 	8, 			""  				}
+		  { 131-VME1, 	9, 			"B131-IOCMOTOR1"	}
+					
+          { 131-VME2, 	1, 			"B131-IOCMOTOR2"	}
+		  { 131-VME2, 	2,			""    				}
+		  { 131-VME2, 	3, 			"MAXv-8000"			}
+		  { 131-VME2, 	4, 			"Acro IP Carrier" 	}
+		  { 131-VME2, 	5, 			"SSI 505F" 			}
+		  { 131-VME2, 	6, 			"SSI 505F"			}
+		  { 131-VME2, 	7, 			""					}
+		  { 131-VME2, 	8, 			""					}
+		  { 131-VME2, 	9, 			""		            }
+		  
+# wiener 21 slot crates	
+          { 140-VME1, 	1, 			"B132-IOCLINAC1"	}
+		  { 140-VME1, 	2, 			""					}
+		  { 140-VME1, 	3, 			""  				}
+		  { 140-VME1, 	4, 			"VTR10012 Dgtzr"	}
+		  { 140-VME1, 	5, 			"" 	                }
+		  { 140-VME1, 	6, 			""    				}
+		  { 140-VME1, 	7, 			"VTR10012 Dgtzr"    }
+		  { 140-VME1, 	8, 			""    				}
+		  { 140-VME1, 	9, 			""    				}
+		  { 140-VME1, 	10, 		"VTR10012 Dgtzr"	}
+		  { 140-VME1, 	11, 		""     				}
+		  { 140-VME1, 	12, 		""     				}
+		  { 140-VME1, 	13, 		"VTR10012 Dgtzr"	}
+		  { 140-VME1, 	14, 		""     				}
+		  { 140-VME1, 	15, 		""     				}
+		  { 140-VME1, 	16, 		"VTR10012 Dgtzr"	}
+		  { 140-VME1, 	17, 		"" 					}
+		  { 140-VME1, 	18, 		""     				}
+		  { 140-VME1, 	19, 		"VTR10012 Dgtzr"	}
+		  { 140-VME1, 	20, 		""  				}
+		  { 140-VME1, 	21, 		"VTR10012 Dgtzr"	}
+		  
+          { 140-VME2, 	1, 			"B132-IOCBPM2"		}
+		  { 140-VME2, 	2, 			""					}
+		  { 140-VME2, 	3, 			"ECDR814 Dgtzr"  	}
+		  { 140-VME2, 	4, 			""    				}
+		  { 140-VME2, 	5, 			"ECDR814 Dgtzr" 	}
+		  { 140-VME2, 	6, 			""    				}
+		  { 140-VME2, 	7, 			""     				}
+		  { 140-VME2, 	8, 			""    				}
+		  { 140-VME2, 	9, 			""    				}
+		  { 140-VME2, 	10, 		""               	}
+		  { 140-VME2, 	11, 		""     				}
+		  { 140-VME2, 	12, 		""     				}
+		  { 140-VME2, 	13, 		""               	}
+		  { 140-VME2, 	14, 		""     				}
+		  { 140-VME2, 	15, 		""     				}
+		  { 140-VME2, 	16, 		""               	}
+		  { 140-VME2, 	17, 		"ECDR814 Dgtzr" 	}
+		  { 140-VME2, 	18, 		""     				}
+		  { 140-VME2, 	19, 		"ECDR814 Dgtzr"  	}
+		  { 140-VME2, 	20, 		""  				}
+		  { 140-VME2, 	21, 		""					}
+		  
+          { 140-VME3, 	1, 			"B140-IOCBOO1"   	}
+		  { 140-VME3, 	2, 			""    				}
+		  { 140-VME3, 	3, 			"VTR812 Dgtzr"		}
+		  { 140-VME3, 	4,			""					}
+		  { 140-VME3, 	5, 			"VTR812 Dgtzr"		}
+		  { 140-VME3, 	6, 			""    				}
+		  { 140-VME3, 	7, 			"Acro IP Carrier"	}
+		  { 140-VME3, 	8, 			"B140-IOCBOO2"		}
+		  { 140-VME3, 	9,			""					}
+		  { 140-VME3, 	10, 		"VTR812 Dgtzr"		}
+		  { 140-VME3, 	11, 		""     				}
+		  { 140-VME3, 	12, 		"VTR812 Dgtzr"		}
+		  { 140-VME3, 	13, 		""					}
+		  { 140-VME3, 	14, 		"VTR812 Dgtzr" 		}
+		  { 140-VME3, 	15, 		""     				}
+		  { 140-VME3, 	16, 		""               	}
+		  { 140-VME3, 	17, 		"B140-IOCBPM2"  	}
+		  { 140-VME3, 	18, 		"" 					}
+		  { 140-VME3, 	19, 		""          		}
+		  { 140-VME3, 	20, 		""     				}
+		  { 140-VME3, 	21, 		""					}	  	
+		  
+          { 140-VME4, 	1, 			""   				}
+		  { 140-VME4, 	2, 			"B140-IOCBPM"		}
+		  { 140-VME4, 	3, 			""					}
+		  { 140-VME4, 	4,			""					}
+		  { 140-VME4, 	5, 			""					}
+		  { 140-VME4, 	6, 			""    				}
+		  { 140-VME4, 	7, 			""					}
+		  { 140-VME4, 	8, 			""					}
+		  { 140-VME4, 	9,			""					}
+		  { 140-VME4, 	10, 		""					}
+		  { 140-VME4, 	11, 		""     				}
+		  { 140-VME4, 	12, 		"VTR10012 Dgtzr"	}
+		  { 140-VME4, 	13, 		""					}
+		  { 140-VME4, 	14, 		"" 					}
+		  { 140-VME4, 	15, 		"VTR10012 Dgtzr"	}
+		  { 140-VME4, 	16, 		""               	}
+		  { 140-VME4, 	17, 		""  				}
+		  { 140-VME4, 	18, 		"" 					}
+		  { 140-VME4, 	19, 		""          		}
+		  { 140-VME4, 	20, 		""     				}
+		  { 140-VME4, 	21, 		"V965 QDC"			}			  	  
+}

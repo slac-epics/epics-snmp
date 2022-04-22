@@ -1,0 +1,33 @@
+#
+#  Template for snmp interface
+#
+# SNMP driver does not support bo records, so this is a workaround.
+#
+#  Macros required:
+#     P: PV prefix
+#     HOST: SNMP host IP address or hostname
+#     ATTR: PV attribute
+#     OID: SNMP OID for parameter of interest
+#     DESC: PV desc.
+#     SCAN: Record scan period
+#  Environment variable required (set in st.cmd):
+#     COMM: SNMP community, e.g. "public"
+#
+
+record(bo, "$(P):$(ATTR)") {
+    field(DESC, "$(DESC="")")
+    field(ZNAM, "$(ZNAM="Off")")
+    field(ONAM, "$(ONAM="On")")
+    field(ZSV,  "$(ZSV=NO_ALARM)")
+    field(OSV,  "$(OSV=NO_ALARM)")
+    field(OUT,  "$(P):$(ATTR)_Raw PP")
+    info(autosaveFields, "ZSV OSV")
+}
+
+record(longout, "$(P):$(ATTR)_Raw") {
+    field(DESC, "$(DESC="")")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(OUT,  "@$(HOST) %(COMM) $(OID) $(MASK="INTEGER:") $(LEN=32) $(FLAGS=i)")
+}
+

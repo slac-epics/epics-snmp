@@ -1,0 +1,60 @@
+
+record(bo, "$(P):FansAllOn") {
+    field(DESC, "All booster fans on")
+    field(ZNAM, "$(ZNAM="Off")")
+    field(ONAM, "$(ONAM="On")")
+    field(ZSV,  "$(ZSV=NO_ALARM)")
+    field(OSV,  "$(OSV=NO_ALARM)")
+    field(FLNK, "$(P):FansAllOnCalc")
+}
+
+record(calc, "$(P):FansAllOnCalc") {
+    field(DESC, "All booster fans on")
+    field(INPA, "$(P):FansAllOn")
+    field(CALC, "A?2:1")
+    field(FLNK, "$(P):FansAllOnSeq")
+}
+
+record(seq, "$(P):FansAllOnSeq") {
+    field(DESC, "All booster fans on")
+    field(DOL1, "$(P):FansAllOnCalc")
+    field(LNK1, "BOOSTER-ACSW1:Outlet1StateSetpt PP")
+    field(DLY2, "2.0")
+    field(DOL2, "$(P):FansAllOnCalc")
+    field(LNK2, "BOOSTER-ACSW2:Outlet1StateSetpt PP")
+    field(DLY3, "2.0")
+    field(DOL3, "$(P):FansAllOnCalc")
+    field(LNK3, "BOOSTER-ACSW3:Outlet1StateSetpt PP")
+    field(DLY4, "2.0")
+    field(DOL4, "$(P):FansAllOnCalc")
+    field(LNK4, "BOOSTER-ACSW4:Outlet1StateSetpt PP")
+    field(DLY5, "2.0")
+    field(DOL5, "$(P):FansAllOnCalc")
+    field(LNK5, "BOOSTER-ACSW5:Outlet1StateSetpt PP")
+    field(DLY6, "2.0")
+    field(DOL6, "$(P):FansAllOnCalc")
+    field(LNK6, "BOOSTER-ACSW6:Outlet1StateSetpt PP")
+    field(FLNK, "$(P):FansAllOnSeq2")
+}
+
+record(seq, "$(P):FansAllOnSeq2") {
+    field(DESC, "All booster fans on")
+    field(DOL1, "$(P):FansAllOnCalc")
+    field(LNK1, "BOOSTER-ACSW1:Outlet2StateSetpt PP")
+    field(DLY2, "2.0")
+    field(DOL2, "$(P):FansAllOnCalc")
+    field(LNK2, "BOOSTER-ACSW2:Outlet2StateSetpt PP")
+    field(DLY3, "2.0")
+    field(DOL3, "$(P):FansAllOnCalc")
+    field(LNK3, "BOOSTER-ACSW3:Outlet2StateSetpt PP")
+    field(DLY4, "2.0")
+    field(DOL4, "$(P):FansAllOnCalc")
+    field(LNK4, "BOOSTER-ACSW4:Outlet2StateSetpt PP")
+    field(DLY5, "2.0")
+    field(DOL5, "$(P):FansAllOnCalc")
+    field(LNK5, "BOOSTER-ACSW5:Outlet2StateSetpt PP")
+    field(DLY6, "2.0")
+    field(DOL6, "$(P):FansAllOnCalc")
+    field(LNK6, "BOOSTER-ACSW6:Outlet2StateSetpt PP")
+}
+

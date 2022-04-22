@@ -90,9 +90,6 @@ class devSnmp_hostversion;
 
 typedef long (*DEVSNMP_DEVFUNC)(devSnmp_pv *pPV);
 
-// needed to cast to this if c++ wants to call RECSUPFUN functions in EPICS base
-typedef long (*RECSUPFUN_VOID_PTR)(void *ptr);
-
 //----------------------------------------------------------------------
 // define a simple class for maintaining a dynamic list of pointers
 typedef int (*POINTERLIST_COMPARE_PROC)(void *p1, void *p2);
@@ -326,7 +323,6 @@ class devSnmp_oid
     bool getValueLong(long *value);
     bool getRawValueString(char *str, int maxsize);
 
-    void queueUpdate(void);
     void periodicProcessing(epicsTimeStamp *pnow);
 
     int getDataLength(void);
@@ -428,14 +424,13 @@ class devSnmp_pv
                bool            *okay);
     virtual ~devSnmp_pv(void);
 
-    bool hasValue();
     bool getValueString(char *str, int maxsize);
     bool getValueDouble(double *value);
     bool getValueLong(long *value);
     bool getRawValueString(char *str, int maxsize);
 
     void periodicProcessing(epicsTimeStamp *pnow);
-    void processRecord(bool asyncUpdate = false);
+    void processRecord(void);
     bool doingProcess(void);
 
     void set(char *str);
@@ -450,8 +445,6 @@ class devSnmp_pv
     void setPollMSec(int msec);
 
     void setPeriodicCallback(DEVSNMP_DEVFUNC procFunc, double seconds);
-
-    void queueUpdate(void) { if (pOurOID) pOurOID->queueUpdate(); }
 
     const char *recordName(void);
     struct dbCommon *record(void);
@@ -468,8 +461,6 @@ class devSnmp_pv
 
     const configDataPV *configData(void);
     long configFlags(void);
-
-    devSnmp_oid* OID() { return pOurOID; }
 
   protected:
     devSnmp_manager  *pOurMgr;
@@ -519,8 +510,6 @@ class devSnmp_group
 
     void sessionRetriesChange(void);
     void sessionTimeoutChange(void);
-
-    void updatePVs(devSnmp_oid *pOid);
 
   protected:
     devSnmp_manager      *pOurMgr;

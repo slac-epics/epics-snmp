@@ -1,0 +1,48 @@
+#
+#  Template for Dell iDRAC server interface
+#
+#  Macros required:
+#     P: PV prefix
+#     HOST: SNMP host IP address or hostname
+#     ATTR: PV attribute
+#     OID: SNMP OID for parameter of interest
+#     DESC: PV desc.
+#     SCAN: Record scan period
+#  Environment variable required (set in st.cmd):
+#     WCR_PREF: Combined string of SNMP community followed by OID prefix, e.g. "public IDRAC-MIB-SMIv2::"
+#
+
+record(longin, "$(P):$(ATTR)_raw") {
+    field(DESC, "$(DESC)")
+    field(DTYP, "Snmp")
+    field(ASG,  "Internal")
+    field(INP,  "@$(HOST) %(WCR_PREF)$(OID) ( 100")
+    field(SCAN, "$(SCAN)")
+    field(FLNK, "$(P):$(ATTR)")
+}
+
+record(mbbi, "$(P):$(ATTR)") {
+    field(DESC, "$(DESC)")
+    field(INP,  "$(P):$(ATTR)_raw")
+    field(ONVL, "1")
+    field(ONST, "Other")
+    field(TWVL, "2")
+    field(TWST, "Unknown")
+    field(THVL, "3")
+    field(THST, "OK")
+    field(FRVL, "4")
+    field(FRST, "Non-Critical")
+    field(FVVL, "5")
+    field(FVST, "Critical")
+    field(SXVL, "6")
+    field(SXST, "Non-Recoverable")
+    field(ONSV, "MINOR")
+    field(TWSV, "MINOR")
+    field(THSV, "NO_ALARM")
+    field(FRSV, "MINOR")
+    field(FVSV, "MAJOR")
+    field(SXSV, "MAJOR")
+    field(UNSV, "MINOR")
+    info(autosaveFields, "ONSV TWSV THSV FRSV FVSV SXSV UNSV")
+}
+

@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------------------------------
--- $HeadURL: http://svn.wiener-d.com/src/enet/trunk/mibs/WIENER-CRATE-MIB.txt $                     
--- $LastChangedDate: 2014-02-25 10:01:45 +0100 (Di, 25. Feb 2014) $                                 
--- $LastChangedRevision: 2358 $                                                                     
+-- $HeadURL: http://svn.wiener-d.com/src/enet/branches/SNMPv3/mibs/WIENER-CRATE-MIB.txt $                     
+-- $LastChangedDate: 2016-09-23 16:59:15 +0200 (Fr, 23 Sep 2016) $                                 
+-- $LastChangedRevision: 3579 $                                                                     
 -- $LastChangedBy: koester (roemer)$                                                                
 -- Copyright © 2005-2007 W-IE-NE-R Plein & Baus GmbH, Burscheid, Germany                            
 ----------------------------------------------------------------------------------------------------
@@ -39,6 +39,12 @@ wiener MODULE-IDENTITY
 
     DESCRIPTION
     "Introduction of the communication.can branch.
+    "
+
+    REVISION "201602180000Z"
+    DESCRIPTION
+    "This revision introduces new OIDs for slew control:
+      outputResistance.
     "
 
     REVISION "200810090000Z"    -- October 9, 2008
@@ -205,9 +211,11 @@ signal OBJECT-IDENTITY
 -------------------------------------------------------------------------------
 System ::= SEQUENCE {
     sysMainSwitch                 INTEGER,
-    sysHardwareReset              INTEGER,
     sysStatus                     BITS,
     sysVmeSysReset                INTEGER,
+    sysHardwareReset              INTEGER,
+	sysFactoryDefaults            INTEGER,
+
     sysConfigDoMeasurementCurrent BITS,
     sysOperatingTime              Integer32,
 
@@ -215,7 +223,8 @@ System ::= SEQUENCE {
     sysDebugMemory16              Integer32,
     sysDebugMemory32              Integer32,
     sysDebug                      OCTET STRING,
-    sysDebugDisplay               OCTET STRING
+    sysDebugDisplay               OCTET STRING,
+    sysDebugBoot                  OCTET STRING
 }
 
 sysMainSwitch OBJECT-TYPE
@@ -293,6 +302,16 @@ sysHardwareReset OBJECT-TYPE
             "Triggered a Reset via Watchdog or ResetLine."
     ::= { system 4 }
 
+sysFactoryDefaults OBJECT-TYPE
+    SYNTAX  INTEGER { off (0), on (1) }
+    MAX-ACCESS  read-write
+    STATUS  current
+    DESCRIPTION
+            "A set operation performs a complete factory reset of ALL data
+			 stored in the controller (e.g. community names, passwords, ...).
+			"
+    ::= { system 5 }
+
 
 sysConfigDoMeasurementCurrent OBJECT-TYPE
     SYNTAX  BITS {
@@ -362,6 +381,14 @@ sysDebugDisplay OBJECT-TYPE
     DESCRIPTION
             "Debug communication with the MPOD display."
     ::= { system 1028 }
+    
+sysDebugBoot OBJECT-TYPE
+    SYNTAX  OCTET STRING
+    MAX-ACCESS  read-write
+    STATUS  current
+    DESCRIPTION
+            "Debug communication with the simple debug interface / bootloader."
+    ::= { system 1029 }
     
 -------------------------------------------------------------------------------
 -- input
@@ -494,7 +521,9 @@ OutputEntry ::= SEQUENCE {
         outputHardwareLimitCurrent          Float,
     
         outputRegulationMode                INTEGER,
-        outputConfigMaxTemperature          Integer32
+        outputConfigMaxTemperature          Integer32,
+        
+        outputResistance                    Float
       }
 
 
@@ -744,7 +773,7 @@ outputGroup OBJECT-TYPE
 
 outputStatus OBJECT-TYPE
     SYNTAX  BITS {
-        outputOn (0) ,
+        outputOn (0),
         outputInhibit (1) ,
         outputFailureMinSenseVoltage (2),
         outputFailureMaxSenseVoltage (3),
@@ -761,7 +790,7 @@ outputStatus OBJECT-TYPE
         outputEmergencyOff (14),
         outputAdjusting (15),
         outputConstantVoltage (16),
-        -- reserved,
+        outputLowCurrentRange (17),
         outputCurrentBoundsExceeded (18),
         outputFailureCurrentLimit (19)
     }
@@ -786,8 +815,8 @@ outputStatus OBJECT-TYPE
                 outputEmergencyOff (14),                EmergencyOff event is active
                 outputAdjusting (15),                   Fine adjustment is working
                 outputConstantVoltage (16),             Voltage control (constant voltage mode)
-                outputVoltageBoundsExceeded (17),       output Voltage out of bounds
-                outputCurrentBoundsExceeded (18),       output Current out of bounds
+                outputLowCurrentRange (17),             The channel is operating in the low current measurement range
+                outputCurrentBoundsExceeded (18),       Output current is out of bounds
                 outputFailureCurrentLimit (19)          Hardware current limit (EHS) / trip (EDS, EBS) was exceeded
             "
 
@@ -1146,7 +1175,7 @@ outputConfigOffsetCurrent OBJECT-TYPE
     ::= { outputEntry 35 }           
 
 outputUserConfig OBJECT-TYPE
-    SYNTAX  Integer32 (0..15)
+    SYNTAX  Integer32 (0..31)
     MAX-ACCESS  read-write
     STATUS  current
     DESCRIPTION
@@ -1202,6 +1231,15 @@ outputConfigMaxTemperature OBJECT-TYPE
             "The maximum possible value of outputSupervisionMaxTemperature."
     ::= { outputEntry 39 }
          
+outputResistance OBJECT-TYPE
+    SYNTAX  Float
+    UNITS   "Ohm"
+    MAX-ACCESS  read-write
+    STATUS  current
+    DESCRIPTION
+            "Item to specify an external resistor. For instance a wire resistor or an external resistor
+	     to protect the detectot which is supplied by a cascaded HV module."
+    ::= { outputEntry 40 }
 -------------------------------------------------------------------------------
 -- output->groups
 -------------------------------------------------------------------------------
@@ -1484,7 +1522,7 @@ moduleStatus OBJECT-TYPE
         moduleIsFineAdjustment (0),
         -- reserved
         moduleIsLiveInsertion (2),
-        -- reserved
+        moduleIsHighVoltageOn (3),
         moduleNeedService (4),
         moduleHardwareLimitVoltageIsGood (5),
         moduleIsInputError (6),

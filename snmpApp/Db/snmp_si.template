@@ -1,0 +1,25 @@
+#
+#  Template for snmp interface
+#
+#  Macros required:
+#     P: PV prefix
+#     HOST: SNMP host IP address or hostname
+#     ATTR: PV attribute
+#     OID: SNMP OID for parameter of interest
+#     DESC: PV desc.
+#     SCAN: Record scan period
+#  Optional macros:
+#     MASK: The substring in the returned variable value string that directly proceeds the value we actually wish to obtain
+#  Environment variable required (set in st.cmd):
+#     COMM: SNMP community, e.g. "public"
+#
+
+record(stringin, "$(P):$(ATTR)") {
+    field(DESC, "$(DESC="")")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) $(OID) $(MASK="STRING:") $(LEN=100)")
+    field(SCAN, "$(SCAN="1 second")")
+    field(PINI, "$(PINI=0)")
+}
+
+

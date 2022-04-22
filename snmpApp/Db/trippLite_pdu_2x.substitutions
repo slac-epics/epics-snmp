@@ -1,0 +1,16 @@
+
+file trippLite_pdu_common.db {
+{none}
+}
+
+file trippLite_pdu_outlet.db {
+pattern
+{N}
+{1}
+{2}
+}
+
+file misc_common.template {
+{none}
+}
+

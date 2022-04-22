@@ -1,0 +1,42 @@
+
+file snmp_si.template {
+pattern
+{              ATTR,                    DESC,                                        OID,        SCAN, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV, MASK}
+{            Uptime,         "System uptime",        DISMAN-EVENT-MIB::sysUpTimeInstance, "10 second",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM,  ")"}
+}
+
+file snmp_si.template {
+pattern
+{              ATTR,                    DESC,                              OID,        SCAN, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV}
+{             Model,                 "Model",       %(M)sPDUIdentModelNumber.0, "10 second",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{            SerNum,         "Serial number",      %(M)sPDUIdentSerialNumber.0, "10 second",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{           ManDate,      "Manufacture date", %(M)sPDUIdentDateOfManufacture.0, "10 second",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{          Firmware,      "Firmware version",       %(M)sPDUIdentFirmwareRev.0, "10 second",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{          Hardware,      "Hardware version",       %(M)sPDUIdentHardwareRev.0, "10 second",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+}
+
+
+file snmp_ai.template {
+pattern
+{              ATTR,                    DESC,                              OID,        SCAN,  ASLO, EGU, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV,       MASK, FLAGS}
+{              Load,            "Total load",         %(M)rPDULoadStatusLoad.1,  "1 second",   0.1, "A",   "",   "", 12.0, 12.5, NO_ALARM, NO_ALARM,    MINOR,    MAJOR, "Gauge32:",  "iR"}
+{       PowerFactor,          "Power factor", %(M)rPDUIdentDevicePowerFactor.0, "10 second", 0.001,  "",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM, "INTEGER:",  "iR"}
+}
+
+file snmp_li.template {
+pattern
+{              ATTR,                    DESC,                              OID,        SCAN,  EGU, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV}
+{           MaxLoad,          "Max PDU load",    %(M)rPDULoadDevMaxPhaseLoad.0, "10 second",  "A",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{            Rating,    "Device load rating",      %(M)rPDUIdentDeviceRating.0, "10 second",  "A",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM}
+{             Power,     "Power consumption",  %(M)rPDUIdentDevicePowerWatts.0,  "1 second",  "W",   "",   "", 1300, 1440, NO_ALARM, NO_ALARM,    MINOR,    MINOR}
+{          VoltAmps,             "Volt-amps",     %(M)rPDUIdentDevicePowerVA.0,  "2 second", "VA",   "",   "", 1300, 1440, NO_ALARM, NO_ALARM,    MINOR,    MINOR}
+}
+
+file snmp_mbbi.template {
+pattern
+{              ATTR,                    DESC,                                  OID,         SCAN,     ONST,       TWST,       THST,            FRST,  TWSV,  THSV,  FRSV, MASK}
+{        LoadStatus,           "Load status",        %(M)rPDULoadStatusLoadState.1,   "5 second", "Normal",      "Low",     "High",      "Overload", MINOR, MINOR, MAJOR,  "("}
+{          PSStatus,   "Power supply status",           %(M)rPDUPowerSupplyAlarm.0,   "5 second", "All OK", "PS1 Fail", "PS2 Fail", "PS 1 & 2 Fail", MAJOR, MAJOR, MAJOR,  "("}
+}
+
+

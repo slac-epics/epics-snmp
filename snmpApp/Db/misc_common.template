@@ -1,0 +1,7 @@
+
+record(stringin, "$(P):Location") {
+    field(DESC, "Device location")
+    field(VAL,  "$(LOC)")
+    field(PINI, "1")
+}
+

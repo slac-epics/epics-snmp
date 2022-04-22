@@ -1,0 +1,10 @@
+# Crate location
+# scondam: 21-Aug-2017: Initialize the crate location from substitutions file.
+#                       Save restore slotloc from RDB.
+
+record(stringin, "$(P)_t:LOC") {
+  field(PINI, "YES")
+  field(VAL, "$(slotloc)")
+#  info(autosaveFields,"VAL")
+}
+

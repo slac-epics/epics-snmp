@@ -1,0 +1,37 @@
+
+file snmp_si.template {
+pattern
+{                ATTR,                    DESC,                                 OID,       SCAN, PINI}
+{      Outlet$(N)Name,           "Outlet name", %(M)rPDUOutletStatusOutletName.$(N), "5 second",    1}
+}
+
+file snmp_so.template {
+pattern
+{                ATTR,                    DESC,                     OID}
+{ Outlet$(N)NameSetpt,  "Outlet name setpoint", %(M)sPDUOutletName.$(N)}
+}
+
+file snmp_mbbi.template {
+pattern
+{                ATTR,                    DESC,                                  OID,       SCAN,  ONST,  TWST, MASK}
+{     Outlet$(N)State,          "Outlet state", %(M)rPDUOutletStatusOutletState.$(N), "1 second",  "On", "Off",  "("}
+}
+
+file snmp_mbbo.template {
+pattern
+{                ATTR,                    DESC,                    OID,  ONST,  TWST,     THST, MASK}
+{Outlet$(N)StateSetpt, "Outlet state setpoint", %(M)sPDUOutletCtl.$(N),  "On", "Off", "Reboot",  "("}
+}
+
+file snmp_li.template {
+pattern
+{                ATTR,                    DESC,                                  OID, EGU,       SCAN}
+{     Outlet$(N)OnDly,       "Outlet on delay", %(M)rPDUOutletConfigPowerOnTime.$(N), "s", "5 second"}
+}
+
+file snmp_lo.template {
+pattern
+{                ATTR,                    DESC,                                  OID, EGU}
+{Outlet$(N)OnDlySetpt, "Outlet on delay setpt", %(M)rPDUOutletConfigPowerOnTime.$(N), "s"}
+}
+

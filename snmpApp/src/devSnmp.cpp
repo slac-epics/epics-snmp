@@ -9,7 +9,7 @@
 #define OUR_VERSION_MAJOR       1
 #define OUR_VERSION_MINOR       1
 #define OUR_VERSION_REVISION    0
-#define OUR_VERSION_PATCHLEVEL  3
+#define OUR_VERSION_PATCHLEVEL  2
 #define _STR_HELPER(x) #x
 #define _STR(x) _STR_HELPER(x)
 #define OUR_VERSION_STRING "devSnmp " \
@@ -154,10 +154,6 @@ static int snmpThreadSleepMSec = 20;
 static int snmpSessionRetries = 5;
 static int snmpSessionTimeout = 10000000;  // = 1 second
 
-// MIB range checking
-// is on by default in net-snmp, we reflect that here
-static int snmpCheckRanges = 1;
-
 typedef struct {
   const char *paramName;
   int *valuePointer;
@@ -167,7 +163,6 @@ typedef struct {
 static void debugLevelChange(void);
 static void sessionRetriesChange(void);
 static void sessionTimeoutChange(void);
-static void checkRangesChange(void);
 
 static setParamItem setParamTable[] = {
   { "DebugLevel",           &snmpDebugLevel,           debugLevelChange     },
@@ -181,7 +176,6 @@ static setParamItem setParamTable[] = {
   { "ThreadSleepMSec",      &snmpThreadSleepMSec,      NULL                 },
   { "SessionRetries",       &snmpSessionRetries,       sessionRetriesChange },
   { "SessionTimeout",       &snmpSessionTimeout,       sessionTimeoutChange },
-  { "CheckRanges",          &snmpCheckRanges,          checkRangesChange    },
   { NULL,                   NULL,                      NULL                 }
 };
 
@@ -368,25 +362,11 @@ static void sessionTimeoutChange(void)
   if (pManager) pManager->sessionTimeoutChange();
 }
 //----------------------------------------------------------------------
-static void checkRangesChange(void)
-{
-  if (snmpCheckRanges < 0) snmpCheckRanges = 0;
-  if (snmpCheckRanges > 1) snmpCheckRanges = 1;
-  int ival = (snmpCheckRanges) ? 0 : 1;
-  netsnmp_ds_set_boolean(NETSNMP_DS_LIBRARY_ID,NETSNMP_DS_LIB_DONT_CHECK_RANGE,ival);
-}
-//----------------------------------------------------------------------
 static bool checkInit(void)
 {
   if (doingEpicsExit) return(false);
 
   if (! didEpicsInit) {
-#if devSnmp_NETSNMP_VERSION < 50400
-	  init_mib();
-#else
-	  netsnmp_init_mib();
-#endif
-
     // set last-tick
     epicsTimeGetCurrent(&globalLastTick);
 
@@ -822,7 +802,7 @@ long snmpTimeObject::elapsedMilliseconds(epicsTimeStamp *pnow)
   // calculate nanoseconds diff
   long nsecPart = (pnow->nsec >= lastStarted.nsec) ?
                    pnow->nsec - lastStarted.nsec
-                : (1000000000 - lastStarted.nsec) + pnow->nsec;
+                : (0xFFFFFFFFul - lastStarted.nsec) + pnow->nsec;
 
   return( secPart*1000 + nsecPart/1000000 );
 }
@@ -1154,9 +1134,6 @@ int devSnmp_session::replyProcessing(int op, SNMP_SESSION *sp, int reqId, SNMP_P
           if (pOID) {
             int stat = pOID->replyProcessing(this,op,SNMP_ERR_NOERROR,vars);
             if (stat != epicsOk) badReturns++;
-            if (pOID->hasReading() && pOurGroup)
-              // update PVs waiting for value
-              pOurGroup->updatePVs(pOID);
           }
           vars = vars->next_variable;
           idx++;
@@ -1545,7 +1522,7 @@ devSnmp_oid::devSnmp_oid
   strcpy(lastError,"(none)");
 
   // set some defaults, PVs that use us will override as appropriate
-  setPollMSec(snmpPassivePollMSec);
+  setPollMSec(10000);
   setDataLength(40);
 
   // init times
@@ -1662,7 +1639,7 @@ bool devSnmp_oid::getValueLong(long *value)
 {
   // if we have no valid long reading, return false
   if (! hasReadingLong()) {
-    strcpy(lastError,"oid has no valid long reading");
+    strcpy(lastError,"oid has no valid double reading");
     return(false);
   }
   epicsMutexLock(valMutex);
@@ -1688,12 +1665,6 @@ bool devSnmp_oid::getRawValueString(char *str, int maxsize)
   copy_string(str,maxsize,reading.read_string);
   epicsMutexUnlock(valMutex);
   return(true);
-}
-//--------------------------------------------------------------------
-void devSnmp_oid::queueUpdate(void)
-{
-  if (lastPollSent.started() && lastPollSent.elapsedMilliseconds(&globalLastTick) >= snmpDoNotPollWeight)
-    lastPollSent.clear();
 }
 //--------------------------------------------------------------------
 void devSnmp_oid::periodicProcessing(epicsTimeStamp *pnow)
@@ -2245,11 +2216,6 @@ const char *devSnmp_pv::devSnmp_pv::errorString(void)
   return(lastError);
 }
 //--------------------------------------------------------------------
-bool devSnmp_pv::hasValue()
-{
-  return pOurOID && pOurOID->hasReading();
-}
-//--------------------------------------------------------------------
 bool devSnmp_pv::getValueString(char *str, int maxsize)
 {
   // get raw string
@@ -2481,14 +2447,11 @@ bool devSnmp_pv::doingProcess(void)
   return(in_rec_process);
 }
 //--------------------------------------------------------------------
-void devSnmp_pv::processRecord(bool asyncUpdate)
+void devSnmp_pv::processRecord(void)
 {
   dbScanLock(pOurRecord);
   in_rec_process = true;
-  if (asyncUpdate)
-    ((RECSUPFUN_VOID_PTR)(pOurRecord->rset->process))(pOurRecord);
-  else
-    dbProcess(pOurRecord);
+  dbProcess(pOurRecord);
   in_rec_process = false;
   dbScanUnlock(pOurRecord);
 }
@@ -2887,12 +2850,11 @@ void devSnmp_group::processing(epicsTimeStamp *pnow)
     // get next OID to poll
     devSnmp_oid *pOID = weightCollection->topOID();
     if (! pOID) break;
+    if (pOID->getPollWeight() >= snmpDoNotPollWeight) break;
 
     // move to next OID now (so we're pointing at it afterwards
     // even if we fill up our transaction below)
     weightCollection->nextOID();
-
-    if (pOID->getPollWeight() >= snmpDoNotPollWeight) continue;
 
     // add this PV to request, and stop if the request is then full
     pGetTrans->addOID(pOID);
@@ -3056,17 +3018,6 @@ void devSnmp_group::report(int level, char *match)
     if (pOID->reportMatchAny(match)) pOID->report(level,match);
   }
   printf("\n");
-}
-//--------------------------------------------------------------------
-void devSnmp_group::updatePVs(devSnmp_oid *pOID)
-{
-  int pvCount = pvList->count();
-  for (int ii = 0; ii < pvCount; ii++) {
-    devSnmp_pv *pPV = (devSnmp_pv *) pvList->itemAt(ii);
-    if (!pPV) continue;
-    if (pPV->OID() != pOID) continue;
-    pPV->processRecord(true);
-  }
 }
 //--------------------------------------------------------------------
 // class devSnmp_host
@@ -3552,6 +3503,11 @@ void devSnmp_host::report(int level, char *match)
 devSnmp_manager::devSnmp_manager(void)
 {
   init_snmp("devSnmp");
+#if devSnmp_NETSNMP_VERSION < 50400
+  init_mib();
+#else
+  netsnmp_init_mib();
+#endif
 
   started               = false;
   sendTask_abort        = false;
@@ -4469,16 +4425,6 @@ static long snmpAiRead(struct aiRecord *pai)
   else
     pPV = (devSnmp_pv *) pai->dpvt;
 
-  pai->pact = TRUE;
-  if (!pPV->hasValue())
-    // wait until value is read
-    return 0;
-  else if (pai->scan == menuScanPassive)
-    // queue an update if passive record
-    pPV->queueUpdate();
-
-  pai->pact = FALSE;
-
   status = -1;
 
   if (pPV->configFlags() & SPECIAL_FLAG_RVAL) {
@@ -4564,16 +4510,6 @@ static long snmpLiRead(struct longinRecord *pli)
   else
     pPV = (devSnmp_pv *) pli->dpvt;
 
-  pli->pact = TRUE;
-  if (!pPV->hasValue())
-    // wait until value is read
-    return 0;
-  else if (pli->scan == menuScanPassive)
-    // queue an update if passive record
-    pPV->queueUpdate();
-
-  pli->pact = FALSE;
-
   status = 2;
 
   if (pPV->getValueLong(&new_val)) {
@@ -4639,16 +4575,6 @@ static long snmpSiRead(struct stringinRecord *psi)
     return(epicsError);
   else
     pPV = (devSnmp_pv *) psi->dpvt;
-
-  psi->pact = TRUE;
-  if (!pPV->hasValue())
-    // wait until value is read
-    return 0;
-  else if (psi->scan == menuScanPassive)
-    // queue an update if passive record
-    pPV->queueUpdate();
-
-  psi->pact = FALSE;
 
   status = 2;
 
@@ -4729,16 +4655,6 @@ static epicsStatus snmpWfRead(struct waveformRecord *pwf)
     return(epicsError);
   else
     pPV = (devSnmp_pv *) pwf->dpvt;
-
-  pwf->pact = TRUE;
-  if (!pPV->hasValue())
-    // wait until value is read
-    return 0;
-  else if (pwf->scan == menuScanPassive)
-    // queue an update if passive record
-    pPV->queueUpdate();
-
-  pwf->pact = FALSE;
 
   status = 2;
 

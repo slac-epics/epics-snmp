@@ -1,0 +1,20 @@
+
+file snmp_si.template {
+pattern
+{              ATTR,                    DESC,                                        OID,        SCAN, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV, MASK}
+{            Uptime,         "System uptime",        DISMAN-EVENT-MIB::sysUpTimeInstance, "10 second",   "",   "",   "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM,  ")"}
+}
+
+file snmp_li.template {
+pattern
+{              ATTR,                    DESC,                              OID,        SCAN,  EGU, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV,       MASK}
+{        NumOutlets,     "Number of outlets",      %(M)tlpPduIdentNumOutlets.1, "10 second",  "",   "",   "",    "",   "", NO_ALARM, NO_ALARM, NO_ALARM, NO_ALARM, "Gauge32:"}
+}
+
+file snmp_ai.template {
+pattern
+{              ATTR,                    DESC,                         OID,        SCAN,  EGU, ASLO, LOLO,  LOW, HIGH, HIHI,     LLSV,      LSV,      HSV,     HHSV,       MASK, FLAGS}
+{             Power,     "Power consumption", %(M)tlpPduOutputPowerKW.1.1,  "2 second",  "W",   10,   "",   "", 1300, 1440, NO_ALARM, NO_ALARM,    MINOR,    MAJOR, "Gauge32:",  "iR"}
+{              Load,         "Total current", %(M)tlpPduOutputCurrent.1.1,  "1 second",  "A", 0.01,   "",   "", 12.0, 13.0, NO_ALARM, NO_ALARM,    MINOR,    MAJOR, "Gauge32:",  "iR"}
+}
+

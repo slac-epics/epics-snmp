@@ -1,0 +1,34 @@
+#
+#  Template for snmp interface
+#
+#  Macros required:
+#     P: PV prefix
+#     HOST: SNMP host IP address or hostname
+#     ATTR: PV attribute
+#     OID: SNMP OID for parameter of interest
+#     DESC: PV desc.
+#     SCAN: Record scan period
+#  Environment variable required (set in st.cmd):
+#     COMM: SNMP community, e.g. "public"
+#
+
+record(ai, "$(P):$(ATTR)") {
+    field(DESC, "$(DESC="")")
+    field(DTYP, "Snmp")
+    field(INP,  "@$(HOST) %(COMM) $(OID) $(MASK="FLOAT:") $(LEN=100) $(FLAGS="")")
+    field(ASLO, "$(ASLO=1.0)")
+    field(AOFF, "$(AOFF=0.0)")
+    field(EGU,  "$(EGU="")")
+    field(PREC, "$(PREC=2)")
+    field(LOLO, "$(LOLO="")")
+    field(LOW,  "$(LOW="")")
+    field(HIGH, "$(HIGH="")")
+    field(HIHI, "$(HIHI="")")
+    field(LLSV, "$(LLSV=NO_ALARM)")
+    field(LSV,  "$(LSV=NO_ALARM)")
+    field(HSV,  "$(HSV=NO_ALARM)")
+    field(HHSV, "$(HHSV=NO_ALARM)")
+    field(SCAN, "$(SCAN="1 second")")
+    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV")
+}
+
