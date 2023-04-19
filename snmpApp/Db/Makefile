@@ -17,6 +17,7 @@ DB += crat_wiener_snmp_test.db
 
 # Generic snmp
 DB += snmp.db
+DB += snmp_ai.template
 DB += snmp_bi.template
 DB += snmp_bo.template
 DB += snmp_lo.template
@@ -25,6 +26,7 @@ DB += snmp_mbbo.template
 DB += snmp_mbbi.template
 DB += snmp_so.template
 DB += snmp_si.template
+DB += snmp_wf.template
 DB += misc_common.template
 
 # Wiener Crates
