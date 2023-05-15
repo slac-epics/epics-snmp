@@ -24,7 +24,7 @@ record(longin, "$(P):$(ATTR)Raw") {
 record(mbbi, "$(P):$(ATTR)") {
     field(DESC, "$(DESC="")")
     field(DTYP, "$(DTYP="Soft Channel")")
-    field(INP,  "$(P):$(ATTR)Raw")
+    field(INP,  "$(P):$(ATTR)Raw NPP MS")
     field(ZRVL, "$(ZRVL="")")
     field(ZRST, "$(ZRST="")")
     field(ZRSV, "$(ZRSV=NO_ALARM)")
