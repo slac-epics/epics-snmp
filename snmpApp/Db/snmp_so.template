@@ -18,6 +18,7 @@ record(stringout, "$(P):$(ATTR)") {
     field(DESC, "$(DESC="")")
     field(DTYP, "Snmp")
     field(OUT,  "@$(HOST) %(COMM) $(OID) $(MASK="STRING:") $(LEN=100) $(FLAGS=s)")
+    field(FLNK, "$(FLNK="")")
 }
 
 

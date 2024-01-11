@@ -19,6 +19,7 @@ record(longout, "$(P):$(ATTR)") {
     field(DRVH, "$(DRVH="")")
     field(LOPR, "$(LOPR="")")
     field(HOPR, "$(HOPR="")")
+    field(FLNK, "$(FLNK="")")
     info(autosaveFields, "DRVL DRVH LOPR HOPR")
 }
 
