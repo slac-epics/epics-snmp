@@ -29,6 +29,6 @@ record(ai, "$(P):$(ATTR)") {
     field(HSV,  "$(HSV=NO_ALARM)")
     field(HHSV, "$(HHSV=NO_ALARM)")
     field(SCAN, "$(SCAN="1 second")")
-    info(autosaveFields, "LOLO LOW HIGH HIHI LLSV LSV HSV HHSV")
+    info(autosaveFields, "$(AUTOSAVE="LOLO LOW HIGH HIHI LLSV LSV HSV HHSV")")
 }
 

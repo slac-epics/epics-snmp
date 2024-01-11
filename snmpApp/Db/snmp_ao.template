@@ -21,6 +21,6 @@ record(ao, "$(P):$(ATTR)") {
     field(LOPR, "$(LOPR="")")
     field(HOPR, "$(HOPR="")")
     field(FLNK, "$(FLNK="")")
-    info(autosaveFields, "DRVL DRVH LOPR HOPR")
+    info(autosaveFields, "$(AUTOSAVE="DRVL DRVH LOPR HOPR")")
 }
 

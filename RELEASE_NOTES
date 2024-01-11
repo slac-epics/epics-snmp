@@ -16,14 +16,18 @@
 #
 #==============================================================
 
-R1.0.2   15-Aug-2023  M. Dunning (mdunning)
-         Support rhel7 build
+R1.0.3  11-Jan-2024  M. Dunning (mdunning)
+        Add autosave macro so defaults are optional
+        Add ao template
+        Add optional FLNK field in output record templates
 
-R1.0.1   19-Apr-2023  M. Dunning (mdunning)
-         Update mbbo & mbbi templates, add waveform template
 
-R1.0.0   13-Mar-2022, K. Luchini (luchini):
-         Inital version (built with EPICS  R7.0.3.1-1.0.3)
+R1.0.2  15-Aug-2023  M. Dunning (mdunning)
+        Support rhel7 build
 
-# End of file
+R1.0.1  19-Apr-2023  M. Dunning (mdunning)
+        Update mbbo & mbbi templates, add waveform template
+
+R1.0.0  13-Mar-2022, K. Luchini (luchini):
+        Inital version (built with EPICS  R7.0.3.1-1.0.3)
 

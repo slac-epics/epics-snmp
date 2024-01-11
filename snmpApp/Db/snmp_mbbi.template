@@ -46,7 +46,6 @@ record(mbbi, "$(P):$(ATTR)") {
     field(SXVL, "$(SXVL="")")
     field(SXST, "$(SXST="")")
     field(SXSV, "$(SXSV=NO_ALARM)")
-    info(autosaveFields, "ZRSV ONSV TWSV THSV FRSV FVSV SXSV")
+    info(autosaveFields, "$(AUTOSAVE="ZRSV ONSV TWSV THSV FRSV FVSV SXSV")")
 }
-
 
