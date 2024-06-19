@@ -11,28 +11,25 @@ IMPORTS
         FROM SNMPv2-SMI
 
     OBJECT-GROUP, NOTIFICATION-GROUP
-    FROM SNMPv2-CONF
+	FROM SNMPv2-CONF
 
     DisplayString, RowStatus, StorageType FROM SNMPv2-TC;
 
 
 netSnmpExtendMIB MODULE-IDENTITY
-    LAST-UPDATED "201003170000Z"
+    LAST-UPDATED "200405080000Z"
     ORGANIZATION "www.net-snmp.org"
     CONTACT-INFO    
-     "postal:   Wes Hardaker
+	 "postal:   Wes Hardaker
                     P.O. Box 382
                     Davis CA  95617
 
           email:    net-snmp-coders@lists.sourceforge.net"
     DESCRIPTION
-     "Defines a framework for scripted extensions for the Net-SNMP agent."
-    REVISION     "201003170000Z"
-    DESCRIPTION
-         "Fixed inconsistencies in the definition of nsExtendConfigTable."
+	 "Defines a framework for scripted extensions for the Net-SNMP agent."
     REVISION     "200405080000Z"
     DESCRIPTION
-    "First revision."
+	"First revision."
     ::= { nsExtensions 1 }
 
 nsExtendObjects  OBJECT IDENTIFIER ::= { nsExtensions 2}
@@ -214,8 +211,8 @@ nsExtendOutput1Entry     OBJECT-TYPE
 NsExtendOutput1Entry ::= SEQUENCE {
     nsExtendOutput1Line DisplayString,
     nsExtendOutputFull  DisplayString,
-    nsExtendOutNumLines Integer32,
-    nsExtendResult      Integer32
+    nsExtendOutNumLines INTEGER,
+    nsExtendResult      INTEGER
 }
 
 nsExtendOutput1Line OBJECT-TYPE
@@ -307,9 +304,9 @@ nsExtendConfigGroup  OBJECT-GROUP
         nsExtendCacheTime, nsExtendExecType, nsExtendRunType,
         nsExtendStorage,   nsExtendStatus,   nsExtendNumEntries
     }
-    STATUS  current
+    STATUS	current
     DESCRIPTION
-    "Objects relating to the configuration of extension commands."
+	"Objects relating to the configuration of extension commands."
     ::= { nsExtendGroups 1 }
 
 nsExtendOutputGroup  OBJECT-GROUP
@@ -317,9 +314,9 @@ nsExtendOutputGroup  OBJECT-GROUP
         nsExtendOutNumLines, nsExtendResult,
         nsExtendOutLine,   nsExtendOutput1Line, nsExtendOutputFull
     }
-    STATUS  current
+    STATUS	current
     DESCRIPTION
-    "Objects relating to the output of extension commands."
+	"Objects relating to the output of extension commands."
     ::= { nsExtendGroups 2 }
 
 END
