@@ -3,20 +3,19 @@ include $(TOP)/configure/CONFIG
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #========================================
-USR_CFLAGS += -I/usr/include
-USR_CFLAGS += -I/usr/lib64
-USR_CFLAGS += `$(NETSNMP_TOP)/$(PKG_ARCH)/bin/net-snmp-config --cflags`
-USR_CFLAGS += -DNETSNMP_NO_INLINE
-
-#USR_LDFLAGS += `net-snmp-config --libs`
-#PROD_LDLIBS += `net-snmp-config --libs`
-
+ifdef PKG_ARCH
+USR_CFLAGS_Linux += $(shell $(NETSNMP_BIN)/net-snmp-config --cflags)
+USR_CFLAGS_Linux += -DNETSNMP_NO_INLINE
+USR_CFLAGS_Linux += $(shell $(PERL) ../getNetSNMPversion.pl $(NETSNMP_BIN))
+USR_CFLAGS_Linux := $(filter-out -Wstrict-prototypes,$(USR_CFLAGS_Linux))
+USR_CFLAGS_Linux := $(filter-out -Wno-format-truncation,$(USR_CFLAGS_Linux))
+USR_CFLAGS_Linux := $(filter-out -Wundef,$(USR_CFLAGS_Linux))
+USR_CPPFLAGS_Linux += $(shell $(PERL) ../getNetSNMPversion.pl $(NETSNMP_BIN))
+endif
 
 USR_INCLUDES += -I$(NETSNMP_INCLUDE)
 netsnmp_DIR = $(NETSNMP_LIB)
 USR_LIBS_Linux += netsnmp
-USR_CFLAGS += $(shell $(PERL) ../getNetSNMPversion.pl $(NETSNMP_TOP)/$(PKG_ARCH)/bin)
-USR_CPPFLAGS += $(shell $(PERL) ../getNetSNMPversion.pl $(NETSNMP_TOP)/$(PKG_ARCH)/bin)
 
 #========================================
 # Build an IOC support library
