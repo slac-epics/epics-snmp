@@ -462,6 +462,10 @@ class devSnmp_pv
     const configDataPV *configData(void);
     long configFlags(void);
 
+    bool needsManualProcess(void);
+    void setManualProcess(bool state);
+    devSnmp_oid *getOID(void);
+
   protected:
     devSnmp_manager  *pOurMgr;
     devSnmp_group    *pOurGroup;
@@ -476,6 +480,7 @@ class devSnmp_pv
     unsigned long     setCount;
     int               pollMSec;
     char              lastError[256];
+    bool              needs_manual_process;
 };
 //----------------------------------------------------------------------
 class devSnmp_group

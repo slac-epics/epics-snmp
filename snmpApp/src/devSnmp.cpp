@@ -2539,6 +2539,21 @@ void devSnmp_pv::report(int level, char *match)
   printf("\n");
 }
 //--------------------------------------------------------------------
+bool devSnmp_pv::needsManualProcess(void)
+{
+  return(needs_manual_process);
+}
+//--------------------------------------------------------------------
+void devSnmp_pv::setManualProcess(bool state)
+{
+  needs_manual_process = state;
+}
+//--------------------------------------------------------------------
+devSnmp_oid *devSnmp_pv::getOID(void)
+{
+  return pOurOID;
+}
+//--------------------------------------------------------------------
 void devSnmp_pv::debugDump(void)
 {
   printf("%s PV %s\n",tnow(),recordName());
@@ -2794,7 +2809,7 @@ void devSnmp_group::processing(epicsTimeStamp *pnow)
   }
 
   //
-  // allow PVs to do any periodic processing they have
+  // allow PVs to do any periodic or manual processing they have
   //
   int pvCount = pvList->count();
   devSnmp_pv **pvArray = (devSnmp_pv **) pvList->rawArray();
@@ -2802,6 +2817,13 @@ void devSnmp_group::processing(epicsTimeStamp *pnow)
     devSnmp_pv *pPV = pvArray[ii];
     if (! pPV) continue;
     if (pPV) pPV->periodicProcessing(pnow);
+    if (pPV->needsManualProcess()) {
+      devSnmp_oid *pOID = pPV->getOID();
+      if ((pOID) && (pOID->hasReading())) {
+        pPV->processRecord();
+        pPV->setManualProcess(false);
+      }
+    }
   }
 
   //
@@ -4413,6 +4435,11 @@ static long snmpAiInit(struct aiRecord *pai)
     return(S_db_badField);
   }
 
+  // if PINI is YES (1), request immediate processing after the first value is received
+  if (pai->pini == 1) {
+    pPV->setManualProcess(true);
+  }
+
   return(epicsOk);
 }
 //--------------------------------------------------------------------
@@ -4497,6 +4524,11 @@ static long snmpLiInit(struct longinRecord *pli)
     return(S_db_badField);
   }
 
+  // if PINI is YES (1), request immediate processing after the first value is received
+  if (pli->pini == 1) {
+    pPV->setManualProcess(true);
+  }
+
   return(epicsOk);
 }
 //--------------------------------------------------------------------
@@ -4561,6 +4593,11 @@ static long snmpSiInit(struct stringinRecord *psi)
     recGblRecordError(S_db_badField,
                       (void *)psi,"devSnmpSi (init_record) bad parameters");
     return(S_db_badField);
+  }
+
+  // if PINI is YES (1), request immediate processing after the first value is received
+  if (psi->pini == 1) {
+    pPV->setManualProcess(true);
   }
 
   return(epicsOk);
@@ -4630,6 +4667,11 @@ static epicsStatus snmpWfInit(struct waveformRecord *pwf)
     recGblRecordError(S_db_badField,
                       (void *)pwf,"devSnmpWf (init_record) bad parameters");
     return(S_db_badField);
+  }
+
+  // if PINI is YES (1), request immediate processing after the first value is received
+  if (pwf->pini == 1) {
+    pPV->setManualProcess(true);
   }
 
   switch (pwf->ftvl) {
