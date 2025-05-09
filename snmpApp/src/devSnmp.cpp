@@ -800,9 +800,12 @@ long snmpTimeObject::elapsedMilliseconds(epicsTimeStamp *pnow)
   if (secPart < -2147480) return(-2147480000);
 
   // calculate nanoseconds diff
+  // replace 0xFFFFFFFFul with ULONG_MAX to ensure compatibility
+  // across platforms where the size of unsigned long may vary
+  // add 1 since ULONG_MAX = -1 when interpreted as signed
   long nsecPart = (pnow->nsec >= lastStarted.nsec) ?
                    pnow->nsec - lastStarted.nsec
-                : (0xFFFFFFFFul - lastStarted.nsec) + pnow->nsec;
+                : 1 + (ULONG_MAX - lastStarted.nsec) + pnow->nsec;
 
   return( secPart*1000 + nsecPart/1000000 );
 }
