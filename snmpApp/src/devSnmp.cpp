@@ -1525,7 +1525,7 @@ devSnmp_oid::devSnmp_oid
   strcpy(lastError,"(none)");
 
   // set some defaults, PVs that use us will override as appropriate
-  setPollMSec(10000);
+  setPollMSec(INT_MAX);
   setDataLength(40);
 
   // init times
@@ -4748,7 +4748,6 @@ static long snmpAoInit(struct aoRecord *pao)
                       (void *)pao,"devSnmpAo (init_record) bad parameters");
     return(S_db_badField);
   }
-  pPV->setPollMSec(snmpPassivePollMSec);
 
   /* request a periodic call to snmpAoReadback, so our display value is
      periodically updated with value from the remote host */
@@ -4923,7 +4922,6 @@ static long snmpLoInit(struct longoutRecord *plo)
                       (void *)plo,"devSnmpLo (init_record) bad parameters");
     return(S_db_badField);
   }
-  pPV->setPollMSec(snmpPassivePollMSec);
 
   /* request a periodic call to snmpLoReadback, so our display value is
      periodically updated with value from the remote host */
@@ -5050,7 +5048,6 @@ static long snmpSoInit(struct stringoutRecord *pso)
                       (void *)pso,"devSnmpSo (init_record) bad parameters");
     return(S_db_badField);
   }
-  pPV->setPollMSec(snmpPassivePollMSec);
 
   /* request a periodic call to snmpSoReadback, so our display value is
      periodically updated with value from the remote host */
