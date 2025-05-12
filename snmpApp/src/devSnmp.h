@@ -227,6 +227,7 @@ class devSnmp_session
     int replyProcessing(int op, SNMP_SESSION *sp, int reqId, SNMP_PDU *pdu);
 
     SNMP_SESSION *getSession(void);
+    devSnmp_oid **getOIDArray(void);
 
   protected:
     devSnmp_magic    ourMagic;
@@ -303,6 +304,20 @@ typedef struct {
     long    read_long;
 } _oid_reading;
 
+/*
+  enum for tracking the state of OIDs that need priority polling
+  useful for processing PINI-enabled PVs as soon as data is received
+  and requesting polling of OIDs when set PVs FLNK to their readback PVs
+*/
+typedef enum {
+  OID_PRIO_NO_PRIORITY,        // normal operation, no immediate polling
+  OID_PRIO_POLL_REQUESTED,     // immediate poll has been requested
+  OID_PRIO_QUEUED_FOR_POLL,    // waiting in the get transaction queue
+  OID_PRIO_AWAITING_REPLY,     // get transaction sent, waiting for reply
+  OID_PRIO_AWAITING_NEXT_DATA, // will accept next data, even if from old session (init only)
+  OID_PRIO_READY_TO_PROCESS    // reply received and ready to handle
+} oid_prioState;
+
 class devSnmp_oid
 // one of these objects exists for each unique OID (group + OID-name)
 {
@@ -370,6 +385,14 @@ class devSnmp_oid
 
     const char *errorString(void);
 
+    oid_prioState getPriorityState(void);
+    void setPriorityState(oid_prioState state);
+    devSnmp_session *getActiveReadbackSession(void);
+    void setActiveReadbackSession(devSnmp_session *pSession);
+
+    bool wasJustSet(void);
+    void setJustSet(bool state);
+
   protected:
     devSnmp_manager  *pOurMgr;
     devSnmp_group    *pOurGroup;
@@ -397,6 +420,9 @@ class devSnmp_oid
     bool              setDebugging;
     snmpTimeObject    debugSetTime;
     _oid_reading      reading;
+    devSnmp_session  *activeReadbackSession;
+    bool              justSet;
+    oid_prioState     priorityState;
 
     void clearData(void);
     void storeData(netsnmp_variable_list *var);
@@ -462,9 +488,11 @@ class devSnmp_pv
     const configDataPV *configData(void);
     long configFlags(void);
 
-    bool needsManualProcess(void);
-    void setManualProcess(bool state);
-    devSnmp_oid *getOID(void);
+    void processManuallyIfNeeded(void);
+    void processOnNextData(void);
+
+    void pollForwardLinkIfNeeded(void);
+    void requestOIDPoll(void);
 
   protected:
     devSnmp_manager  *pOurMgr;
@@ -480,7 +508,6 @@ class devSnmp_pv
     unsigned long     setCount;
     int               pollMSec;
     char              lastError[256];
-    bool              needs_manual_process;
 };
 //----------------------------------------------------------------------
 class devSnmp_group
@@ -516,12 +543,15 @@ class devSnmp_group
     void sessionRetriesChange(void);
     void sessionTimeoutChange(void);
 
+    devSnmp_pv *findPV(char *pvName);
+
   protected:
     devSnmp_manager      *pOurMgr;
     devSnmp_host         *pOurHost;
     SNMP_SESSION         *base_session;
     snmpPointerList      *pvList;
     snmpPointerList      *oidList;
+    snmpPointerList      *priorityOIDQueue;
     snmpWeightCollection *weightCollection;
     long                  bestReplyMsec;
     long                  worstReplyMsec;

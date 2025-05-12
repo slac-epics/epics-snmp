@@ -1334,6 +1334,12 @@ long devSnmp_session::millisecondsSinceSent(epicsTimeStamp *pnow)
   return( timeSent.elapsedMilliseconds(pnow) );
 }
 //--------------------------------------------------------------------
+devSnmp_oid **devSnmp_session::getOIDArray(void)
+{
+  devSnmp_oid **oidArray = (devSnmp_oid **) oidList->rawArray();
+  return(oidArray);
+}
+//--------------------------------------------------------------------
 // class devSnmp_transaction
 //--------------------------------------------------------------------
 devSnmp_transaction::devSnmp_transaction(bool isSet)
@@ -1509,19 +1515,22 @@ devSnmp_oid::devSnmp_oid
 
   // init variables
   memset(&reading,0,sizeof(_oid_reading));
-  valMutex         = epicsMutexCreate();
-  setMutex         = epicsMutexCreate();
-  flagged_read_bad = SNMP_ERR_NOERROR;
-  queued_for_get   = false;
-  validFlag        = false;
-  pollSendCount    = 0;
-  pollReplyCount   = 0;
-  setCount         = 0;
-  errorCount       = 0;
-  compFailures     = 0;
-  pollWeight       = snmpDoNotPollWeight;
-  settingToSend    = NULL;
-  setDebugging     = false;
+  valMutex              = epicsMutexCreate();
+  setMutex              = epicsMutexCreate();
+  flagged_read_bad      = SNMP_ERR_NOERROR;
+  queued_for_get        = false;
+  validFlag             = false;
+  pollSendCount         = 0;
+  pollReplyCount        = 0;
+  setCount              = 0;
+  errorCount            = 0;
+  compFailures          = 0;
+  pollWeight            = snmpDoNotPollWeight;
+  settingToSend         = NULL;
+  setDebugging          = false;
+  activeReadbackSession = NULL;
+  justSet               = false;
+  priorityState         = OID_PRIO_NO_PRIORITY;
   strcpy(lastError,"(none)");
 
   // set some defaults, PVs that use us will override as appropriate
@@ -1848,6 +1857,7 @@ long devSnmp_oid::recalcPollWeight(epicsTimeStamp *pnow)
   //   > 0 : PV isn't due for a poll yet (larger num = more time until due)
   //
   pollWeight = pollMSec - lastPollSent.elapsedMilliseconds(pnow);
+
   // keep from getting too large
   if (pollWeight < -65535) pollWeight = -65535;
   if (pollWeight >  65535) pollWeight =  65535;
@@ -1907,7 +1917,11 @@ void devSnmp_oid::readingSendStatus(bool state)
 {
   if (state) {
     pollSendCount++;
-    lastPollSent.start(&globalLastTick);
+    if (priorityState != OID_PRIO_QUEUED_FOR_POLL) {
+      // update lastPollSent only if not in priority queue in order to
+      // preserve periodic poll timing
+      lastPollSent.start(&globalLastTick);
+    }
   } else {
     errorCount++;
   }
@@ -2061,6 +2075,12 @@ int devSnmp_oid::readReplyProcessing
           // compare succeeded, pull out data
           compFailures = 0;
           storeData(var);
+
+          // readback complete
+          if ((pSession == activeReadbackSession) || (priorityState == OID_PRIO_AWAITING_NEXT_DATA)) {
+            activeReadbackSession = NULL;
+            priorityState = OID_PRIO_READY_TO_PROCESS;
+          }
         }
       } else {
         // no error but DIDN'T get a variable, so some other PV in our
@@ -2124,6 +2144,7 @@ int devSnmp_oid::setReplyProcessing
         }
         debugSetProgress("setReplyProcessing() : set successful");
         debugSetEnd();
+        justSet = true;
         retVal = epicsOk;
       }
     } else {
@@ -2149,6 +2170,37 @@ int devSnmp_oid::setReplyProcessing
   }
 
   return(retVal);
+}
+//--------------------------------------------------------------------
+oid_prioState devSnmp_oid::getPriorityState(void)
+{
+  return priorityState;
+}
+//--------------------------------------------------------------------
+void devSnmp_oid::setPriorityState(oid_prioState state)
+{
+  priorityState = state;
+}
+//--------------------------------------------------------------------
+devSnmp_session *devSnmp_oid::getActiveReadbackSession(void)
+{
+  return activeReadbackSession;
+}
+//--------------------------------------------------------------------
+void devSnmp_oid::setActiveReadbackSession(devSnmp_session *pSession)
+{
+  activeReadbackSession = pSession;
+}
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+bool devSnmp_oid::wasJustSet(void)
+{
+  return justSet;
+}
+//--------------------------------------------------------------------
+void devSnmp_oid::setJustSet(bool state)
+{
+  justSet = state;
 }
 //--------------------------------------------------------------------
 // class devSnmp_pv
@@ -2539,21 +2591,6 @@ void devSnmp_pv::report(int level, char *match)
   printf("\n");
 }
 //--------------------------------------------------------------------
-bool devSnmp_pv::needsManualProcess(void)
-{
-  return(needs_manual_process);
-}
-//--------------------------------------------------------------------
-void devSnmp_pv::setManualProcess(bool state)
-{
-  needs_manual_process = state;
-}
-//--------------------------------------------------------------------
-devSnmp_oid *devSnmp_pv::getOID(void)
-{
-  return pOurOID;
-}
-//--------------------------------------------------------------------
 void devSnmp_pv::debugDump(void)
 {
   printf("%s PV %s\n",tnow(),recordName());
@@ -2569,6 +2606,36 @@ void devSnmp_pv::debugDump(void)
     pOurOID->debugDump();
 }
 //--------------------------------------------------------------------
+void devSnmp_pv::processManuallyIfNeeded(void)
+{
+  if ((pOurOID) && (pOurOID->getPriorityState() == OID_PRIO_READY_TO_PROCESS)) {
+    processRecord();
+    pOurOID->setPriorityState(OID_PRIO_NO_PRIORITY);
+  }
+}
+//--------------------------------------------------------------------
+void devSnmp_pv::processOnNextData(void)
+{
+  if (pOurOID) pOurOID->setPriorityState(OID_PRIO_AWAITING_NEXT_DATA);
+}
+//--------------------------------------------------------------------
+void devSnmp_pv::pollForwardLinkIfNeeded(void)
+{
+   char *flnkPVName = pOurRecord->flnk.value.pv_link.pvname;
+   devSnmp_pv *pFlnkPV = pOurGroup->findPV(flnkPVName);
+   if (pFlnkPV) {
+     if ((pOurOID) && (pOurOID->wasJustSet())) {
+       pFlnkPV->requestOIDPoll();
+       pOurOID->setJustSet(false);
+     }
+   }
+}
+//--------------------------------------------------------------------
+void devSnmp_pv::requestOIDPoll(void)
+{
+  if (pOurOID) pOurOID->setPriorityState(OID_PRIO_POLL_REQUESTED);
+}
+//--------------------------------------------------------------------
 // class devSnmp_group
 //--------------------------------------------------------------------
 devSnmp_group::devSnmp_group(devSnmp_manager *pMgr, devSnmp_host *host, char *community, bool *okay)
@@ -2579,6 +2646,7 @@ devSnmp_group::devSnmp_group(devSnmp_manager *pMgr, devSnmp_host *host, char *co
   pOurHost         = host;
   pvList           = new snmpPointerList();
   oidList          = new snmpPointerList();
+  priorityOIDQueue = new snmpPointerList();
   weightCollection = new snmpWeightCollection();
   bestReplyMsec    = 0;
   worstReplyMsec   = 0;
@@ -2670,6 +2738,12 @@ devSnmp_group::~devSnmp_group(void)
     }
     delete oidList;
     oidList = NULL;
+  }
+
+  // delete priority OID list
+  if (priorityOIDQueue) {
+    delete priorityOIDQueue;
+    priorityOIDQueue = NULL;
   }
 
   // delete weight list
@@ -2817,13 +2891,10 @@ void devSnmp_group::processing(epicsTimeStamp *pnow)
     devSnmp_pv *pPV = pvArray[ii];
     if (! pPV) continue;
     if (pPV) pPV->periodicProcessing(pnow);
-    if (pPV->needsManualProcess()) {
-      devSnmp_oid *pOID = pPV->getOID();
-      if ((pOID) && (pOID->hasReading())) {
-        pPV->processRecord();
-        pPV->setManualProcess(false);
-      }
-    }
+    pPV->processManuallyIfNeeded();
+
+    // poll forward links
+    pPV->pollForwardLinkIfNeeded();
   }
 
   //
@@ -2851,10 +2922,16 @@ void devSnmp_group::processing(epicsTimeStamp *pnow)
     if (! pOID) continue;
     long thisW = pOID->recalcPollWeight(pnow);
     if ((ii == 0) || (thisW < minW)) minW = thisW;
+
+    // add to priority list if immediate polling requested
+    if (pOID->getPriorityState() == OID_PRIO_POLL_REQUESTED) {
+      priorityOIDQueue->append(pOID);
+      pOID->setPriorityState(OID_PRIO_QUEUED_FOR_POLL);
+    }
   }
 
   // nothing else to do if no OIDs need to be polled
-  if (minW > snmpMaxTopPollWeight) return;
+  if ((minW > snmpMaxTopPollWeight) && (priorityOIDQueue->count() == 0)) return;
 
   /*
     If we get here we need to poll at least one OID.  weightCollection
@@ -2871,19 +2948,29 @@ void devSnmp_group::processing(epicsTimeStamp *pnow)
   */
   weightCollection->transactionBuildStart();
   devSnmp_getTransaction *pGetTrans = new devSnmp_getTransaction(maxOidsPerReq);
+  bool containsPriorityOIDs = false;
   do {
+    devSnmp_oid *pOID;
+    if (priorityOIDQueue->count() > 0) {
+      // take care of priority OIDs first
+      containsPriorityOIDs = true;
+      pOID = (devSnmp_oid *) priorityOIDQueue->removeItemAt(0);
+      if (! pOID) break;
+    } else {
     // get next OID to poll
-    devSnmp_oid *pOID = weightCollection->topOID();
-    if (! pOID) break;
-    if (pOID->getPollWeight() >= snmpDoNotPollWeight) break;
+      pOID = weightCollection->topOID();
+      if (! pOID) break;
+      if (pOID->getPollWeight() >= snmpDoNotPollWeight) break;
 
-    // move to next OID now (so we're pointing at it afterwards
-    // even if we fill up our transaction below)
-    weightCollection->nextOID();
+      // move to next OID now (so we're pointing at it afterwards
+      // even if we fill up our transaction below)
+      weightCollection->nextOID();
+    }
 
     // add this PV to request, and stop if the request is then full
     pGetTrans->addOID(pOID);
     if (pGetTrans->isFull()) break;
+    if ((containsPriorityOIDs) && (priorityOIDQueue->count() == 0)) break;
   } while (true);
 
   weightCollection->transactionBuildEnd();
@@ -3043,6 +3130,20 @@ void devSnmp_group::report(int level, char *match)
     if (pOID->reportMatchAny(match)) pOID->report(level,match);
   }
   printf("\n");
+}
+//--------------------------------------------------------------------
+devSnmp_pv *devSnmp_group::findPV(char *pvName)
+{
+  if (pvName == NULL) return(NULL);
+
+  int pvCount = pvList->count();
+  devSnmp_pv **pvArray = (devSnmp_pv **) pvList->rawArray();
+  for (int ii = 0; ii < pvCount; ii++) {
+    devSnmp_pv *pPV = pvArray[ii];
+    if (! pPV) continue;
+    if (strcmp(pvName, pPV->recordName()) == 0) return(pPV);
+  }
+  return(NULL);
 }
 //--------------------------------------------------------------------
 // class devSnmp_host
@@ -3433,7 +3534,7 @@ void devSnmp_host::processing(epicsTimeStamp *pnow)
     }
   } else if (getQueue->count() > 0) {
     // no 'set' transactions waiting, select next 'get' transaction in queue
-    pTrans = (devSnmp_transaction *) getQueue->removeItemAt(0);
+    pTrans = (devSnmp_transaction *) getQueue->removeItemAt(0); 
   }
 
   if (pTrans) {
@@ -3449,6 +3550,19 @@ void devSnmp_host::processing(epicsTimeStamp *pnow)
     } else {
       // send succeeded, add it to active session list
       activeSessionList->append(pSession);
+
+      // if reading back, set active session for OIDs
+      if (! pSession->isSetting()) {
+        int oidCount = pSession->itemCount();
+        devSnmp_oid **oidArray = pSession->getOIDArray();
+        for (int ii = 0; ii < oidCount; ii++) {
+          devSnmp_oid *pOID = oidArray[ii];
+          if ((pOID) && (pOID->getPriorityState() == OID_PRIO_QUEUED_FOR_POLL)) {
+            pOID->setActiveReadbackSession(pSession);
+            pOID->setPriorityState(OID_PRIO_AWAITING_REPLY);
+          }
+        }
+      }
     }
 
     // delete transaction object, we're done with it now
@@ -4437,7 +4551,7 @@ static long snmpAiInit(struct aiRecord *pai)
 
   // if PINI is YES (1), request immediate processing after the first value is received
   if (pai->pini == 1) {
-    pPV->setManualProcess(true);
+    pPV->processOnNextData();
   }
 
   return(epicsOk);
@@ -4526,7 +4640,7 @@ static long snmpLiInit(struct longinRecord *pli)
 
   // if PINI is YES (1), request immediate processing after the first value is received
   if (pli->pini == 1) {
-    pPV->setManualProcess(true);
+    pPV->processOnNextData();
   }
 
   return(epicsOk);
@@ -4597,7 +4711,7 @@ static long snmpSiInit(struct stringinRecord *psi)
 
   // if PINI is YES (1), request immediate processing after the first value is received
   if (psi->pini == 1) {
-    pPV->setManualProcess(true);
+    pPV->processOnNextData();
   }
 
   return(epicsOk);
@@ -4671,7 +4785,7 @@ static epicsStatus snmpWfInit(struct waveformRecord *pwf)
 
   // if PINI is YES (1), request immediate processing after the first value is received
   if (pwf->pini == 1) {
-    pPV->setManualProcess(true);
+    pPV->processOnNextData();
   }
 
   switch (pwf->ftvl) {
