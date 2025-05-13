@@ -1247,7 +1247,7 @@ bool devSnmp_session::send(void)
 
   bool state;
   if (snmp_send(session,pdu)) {
-    timeSent.start(&globalLastTick);
+    timeSent.start(NULL);
     sent = true;
     // inc manager's request counter so its read task knows to be reading
     pOurMgr->incActiveRequests();
@@ -3025,7 +3025,7 @@ void devSnmp_group::sessionGotReply(devSnmp_session *pSession)
 {
   // update avgReplyMsec, etc
 
-  double msec = 1000.0 * pSession->secondsSinceSent(&globalLastTick);
+  double msec = 1000.0 * pSession->secondsSinceSent(NULL);
 
   if (replyCount) {
     if (msec < bestReplyMsec) bestReplyMsec = msec;
