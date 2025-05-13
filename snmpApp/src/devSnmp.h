@@ -73,6 +73,11 @@ typedef struct {
   int    securityLevel;
 } devSnmp_v3params;
 
+typedef struct {
+  u_char *data;
+  size_t  len;
+} snmp_engineID;
+
 typedef struct snmp_session SNMP_SESSION;
 typedef struct snmp_pdu SNMP_PDU;
 typedef struct __oid OID;
@@ -228,6 +233,8 @@ class devSnmp_session
 
     SNMP_SESSION *getSession(void);
     devSnmp_oid **getOIDArray(void);
+    void getEngineID(snmp_engineID *engineID);
+    void setEngineID(snmp_engineID *engineID);
 
   protected:
     devSnmp_magic    ourMagic;
@@ -607,6 +614,7 @@ class devSnmp_host
     snmpPointerList *activeSessionList;
     int              snmpVersion;
     int              maxOidsPerReq;
+    snmp_engineID    cachedEngineID;
 
     devSnmp_v3params v3params;
 

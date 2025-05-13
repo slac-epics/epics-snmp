@@ -1340,6 +1340,33 @@ devSnmp_oid **devSnmp_session::getOIDArray(void)
   return(oidArray);
 }
 //--------------------------------------------------------------------
+void devSnmp_session::getEngineID(snmp_engineID *pEngineID)
+{
+  u_char *pOurEngineID = session->securityEngineID;
+  size_t ourEngineIDLen = session->securityEngineIDLen;
+  if ((pOurEngineID) && (ourEngineIDLen > 0)) {
+    u_char *ucp = (u_char *) malloc(ourEngineIDLen);
+    if (ucp) {
+      memmove(ucp, pOurEngineID, ourEngineIDLen);
+      pEngineID->data = ucp;
+      pEngineID->len = ourEngineIDLen;
+    }
+  }
+}
+//--------------------------------------------------------------------
+void devSnmp_session::setEngineID(snmp_engineID *pEngineID)
+{
+  if ((pEngineID->data) && (pEngineID->len > 0)) {
+    if (session->securityEngineID) free(session->securityEngineID);
+    u_char *ucp = (u_char *) malloc(pEngineID->len);
+    if (ucp) {
+      memmove(ucp, pEngineID->data, pEngineID->len);
+      session->securityEngineID = ucp;
+      session->securityEngineIDLen = pEngineID->len;
+    }
+  }
+}
+//--------------------------------------------------------------------
 // class devSnmp_transaction
 //--------------------------------------------------------------------
 devSnmp_transaction::devSnmp_transaction(bool isSet)
@@ -3157,10 +3184,12 @@ devSnmp_host::devSnmp_host(devSnmp_manager *pMgr, char *host, bool *okay)
   hostname = dup_string(host);
 
   // init variables
-  groupList         = new snmpPointerList();
-  getQueue          = new snmpPointerList();
-  setQueue          = new snmpPointerList();
-  activeSessionList = new snmpPointerList();
+  groupList           = new snmpPointerList();
+  getQueue            = new snmpPointerList();
+  setQueue            = new snmpPointerList();
+  activeSessionList   = new snmpPointerList();
+  cachedEngineID.data = NULL;
+  cachedEngineID.len  = 0;
   memset(&v3params,0,sizeof(devSnmp_v3params));
 
   // set some defaults (user can override later)
@@ -3227,6 +3256,12 @@ devSnmp_host::~devSnmp_host(void)
   if (hostname) {
     delete [] hostname;
     hostname = NULL;
+  }
+
+  // delete engineID
+  if (cachedEngineID.data) {
+    free(cachedEngineID.data);
+    cachedEngineID.data = NULL;
   }
 }
 //--------------------------------------------------------------------
@@ -3502,6 +3537,9 @@ void devSnmp_host::processing(epicsTimeStamp *pnow)
     devSnmp_session *pSession = sessionArray[ii];
     if (! pSession) continue;
     if ((pSession->isCompleted()) || (pSession->secondsSinceCreated(pnow) > 60)) {
+      // cache engineID for reuse in SNMPv3 requests, avoiding probing overhead
+      if (cachedEngineID.len == 0) pSession->getEngineID(&cachedEngineID);
+
       if ((snmpDebugLevel) && (pSession->secondsSinceCreated(pnow) > 60))
         printf("*** devSnmp: %s deleted stale session\n",hostName());
       activeSessionList->removeItemAt(ii);
@@ -3543,23 +3581,36 @@ void devSnmp_host::processing(epicsTimeStamp *pnow)
 
     if (! pSession) {
       // could not create session, nothing else to do here
-    } else if (! pSession->send()) {
-      // send failed
-      snmp_perror("devSnmp_host::processing : session send failed");
-      delete pSession;
     } else {
-      // send succeeded, add it to active session list
-      activeSessionList->append(pSession);
+      // populate session with cached engineID if available
+      if (cachedEngineID.len > 0) pSession->setEngineID(&cachedEngineID);
 
-      // if reading back, set active session for OIDs
-      if (! pSession->isSetting()) {
-        int oidCount = pSession->itemCount();
-        devSnmp_oid **oidArray = pSession->getOIDArray();
-        for (int ii = 0; ii < oidCount; ii++) {
-          devSnmp_oid *pOID = oidArray[ii];
-          if ((pOID) && (pOID->getPriorityState() == OID_PRIO_QUEUED_FOR_POLL)) {
-            pOID->setActiveReadbackSession(pSession);
-            pOID->setPriorityState(OID_PRIO_AWAITING_REPLY);
+      // send session
+      if (! pSession->send()) {
+        // send failed
+        snmp_perror("devSnmp_host::processing : session send failed");
+        delete pSession;
+
+        // flush engineID
+        if (cachedEngineID.data) {
+          free(cachedEngineID.data);
+          cachedEngineID.data = NULL;
+          cachedEngineID.len = 0;
+        }
+      } else {
+        // send succeeded, add it to active session list
+        activeSessionList->append(pSession);
+
+        // if reading back, set active session for OIDs
+        if (! pSession->isSetting()) {
+          int oidCount = pSession->itemCount();
+          devSnmp_oid **oidArray = pSession->getOIDArray();
+          for (int ii = 0; ii < oidCount; ii++) {
+            devSnmp_oid *pOID = oidArray[ii];
+            if ((pOID) && (pOID->getPriorityState() == OID_PRIO_QUEUED_FOR_POLL)) {
+              pOID->setActiveReadbackSession(pSession);
+              pOID->setPriorityState(OID_PRIO_AWAITING_REPLY);
+            }
           }
         }
       }
