@@ -2675,7 +2675,7 @@ devSnmp_group::devSnmp_group(devSnmp_manager *pMgr, devSnmp_host *host, char *co
   oidList          = new snmpPointerList();
   priorityOIDQueue = new snmpPointerList();
   weightCollection = new snmpWeightCollection();
-  bestReplyMsec    = 0;
+  bestReplyMsec    = LONG_MAX;
   worstReplyMsec   = 0;
   avgReplyMsec     = 0.0;
   sendCount        = 0;
