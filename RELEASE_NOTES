@@ -16,6 +16,17 @@
 #
 #==============================================================
 
+R1.1.0  13-May-2025  A. Le (anle)
+    Improve accuracy of reply times
+    Initialize bestReplyMsec to worst possible value
+    Cache SNMPv3 engineID to reduce network load
+    Implement priority polling after set operations
+    Process PVs with PINI=YES as soon as data is received
+    Allow poll period longer than 10 seconds and prevent record 
+    init function from overriding it
+    Replace 0xFFFFFFFFul with ULONG_MAX for compatibility
+    and correctness
+
 R1.0.4  19-Jun-2024  M. Dunning (mdunning)
     Bump net-snmp version to 5.9.4
     Clean up Makefile    
