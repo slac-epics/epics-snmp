@@ -388,6 +388,16 @@ for a helpful little perl script which provides a numeric definition such as:
     </tr>
 
     <tr>
+      <td>FlnkPollDelayMSec</td>
+      <td align="right">500</td>
+      <td><p>How long to wait after a setting as been made to a PV before
+          polling the OID referenced by the PV's FLNK field. This delay
+          allows the SNMP host device sufficient time to apply the change
+          before the linked PV is read, reducing the chance of reading
+          stale values.</p></td>
+    </tr>
+
+    <tr>
       <td>ThreadSleepMSec</td>
       <td align="right">20</td>
       <td><p>How long the read or send threads sleep at the end of each

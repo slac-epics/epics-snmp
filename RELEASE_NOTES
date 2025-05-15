@@ -18,6 +18,7 @@
 
 R1.1.1  14-May-2025  A. Le (anle)
     Add feature to disable polling for a given host
+    Add forward link poll delay
 
 R1.1.0  13-May-2025  A. Le (anle)
     Improve accuracy of reply times

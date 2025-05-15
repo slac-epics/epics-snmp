@@ -146,6 +146,10 @@ static int snmpSetSkipReadbackMSec = 4000;
 // host can be before 'set' transactions no longer have priority over it
 static int snmpReadStarvationMSec = 1000;
 
+// how long to wait after setting this record before polling its forward
+// link target
+static int snmpFlnkPollDelayMSec = 500;
+
 // thread sleep time for read and send task loops
 static int snmpThreadSleepMSec = 20;
 
@@ -173,6 +177,7 @@ static setParamItem setParamTable[] = {
   { "PassivePollMSec",      &snmpPassivePollMSec,      NULL                 },
   { "SetSkipReadbackMSec",  &snmpSetSkipReadbackMSec,  NULL                 },
   { "ReadStarvationMSec",   &snmpReadStarvationMSec,   NULL                 },
+  { "FlnkPollDelayMSec",    &snmpFlnkPollDelayMSec,    NULL                 },
   { "ThreadSleepMSec",      &snmpThreadSleepMSec,      NULL                 },
   { "SessionRetries",       &snmpSessionRetries,       sessionRetriesChange },
   { "SessionTimeout",       &snmpSessionTimeout,       sessionTimeoutChange },
@@ -1567,6 +1572,7 @@ devSnmp_oid::devSnmp_oid
   // init times
   pollStart.start(&globalLastTick);
   lastSetSent.clear();
+  lastPollRequested.clear();
   lastPollSent.clear();
   lastPollReply.clear();
 
@@ -2230,6 +2236,17 @@ void devSnmp_oid::setJustSet(bool state)
   justSet = state;
 }
 //--------------------------------------------------------------------
+void devSnmp_oid::requestOIDPoll(void)
+{
+  lastPollRequested.start(&globalLastTick);
+  priorityState = OID_PRIO_POLL_REQUESTED;
+}
+//--------------------------------------------------------------------
+long devSnmp_oid::millisecondsSinceRequested(epicsTimeStamp *pnow)
+{
+  return( lastPollRequested.elapsedMilliseconds(pnow) );
+}
+//--------------------------------------------------------------------
 // class devSnmp_pv
 //--------------------------------------------------------------------
 devSnmp_pv::devSnmp_pv
@@ -2660,7 +2677,7 @@ void devSnmp_pv::pollForwardLinkIfNeeded(void)
 //--------------------------------------------------------------------
 void devSnmp_pv::requestOIDPoll(void)
 {
-  if (pOurOID) pOurOID->setPriorityState(OID_PRIO_POLL_REQUESTED);
+  if (pOurOID) pOurOID->requestOIDPoll();
 }
 //--------------------------------------------------------------------
 // class devSnmp_group
@@ -2951,7 +2968,8 @@ void devSnmp_group::processing(epicsTimeStamp *pnow)
     if ((ii == 0) || (thisW < minW)) minW = thisW;
 
     // add to priority list if immediate polling requested
-    if (pOID->getPriorityState() == OID_PRIO_POLL_REQUESTED) {
+    if ((pOID->getPriorityState() == OID_PRIO_POLL_REQUESTED) &&
+        (pOID->millisecondsSinceRequested(pnow) >= snmpFlnkPollDelayMSec)) {
       priorityOIDQueue->append(pOID);
       pOID->setPriorityState(OID_PRIO_QUEUED_FOR_POLL);
     }

@@ -400,6 +400,9 @@ class devSnmp_oid
     bool wasJustSet(void);
     void setJustSet(bool state);
 
+    void requestOIDPoll(void);
+    long millisecondsSinceRequested(epicsTimeStamp *pnow);
+
   protected:
     devSnmp_manager  *pOurMgr;
     devSnmp_group    *pOurGroup;
@@ -412,6 +415,7 @@ class devSnmp_oid
     int               flagged_read_bad;
     snmpTimeObject    pollStart;
     snmpTimeObject    lastSetSent;
+    snmpTimeObject    lastPollRequested;
     snmpTimeObject    lastPollSent;
     snmpTimeObject    lastPollReply;
     unsigned long     pollSendCount;
