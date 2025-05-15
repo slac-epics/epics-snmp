@@ -2505,7 +2505,7 @@ void devSnmp_pv::debugSetEnd()
 //--------------------------------------------------------------------
 void devSnmp_pv::set(char *str)
 {
-  if (pOurOID) {
+  if ((pOurOID) && (! pOurGroup->isHostDisabled())) {
     setCount++;
     pOurOID->set(oidExtra.set_type,str);
     lastSetSent.start(&globalLastTick);
@@ -3173,6 +3173,11 @@ devSnmp_pv *devSnmp_group::findPV(char *pvName)
   return(NULL);
 }
 //--------------------------------------------------------------------
+bool devSnmp_group::isHostDisabled(void)
+{
+  return(pOurHost->isDisabled());
+}
+//--------------------------------------------------------------------
 // class devSnmp_host
 //--------------------------------------------------------------------
 devSnmp_host::devSnmp_host(devSnmp_manager *pMgr, char *host, bool *okay)
@@ -3195,6 +3200,7 @@ devSnmp_host::devSnmp_host(devSnmp_manager *pMgr, char *host, bool *okay)
   // set some defaults (user can override later)
   snmpVersion   = SNMP_VERSION_2c;
   maxOidsPerReq = DEFAULT_MAX_OIDS_PER_REQ;
+  disabled      = false;
   setSnmpV3Param("authType",      "MD5",          true);
   setSnmpV3Param("privType",      "AES",          true);
   setSnmpV3Param("securityLevel", "noAuthNoPriv", true);
@@ -3507,6 +3513,17 @@ int devSnmp_host::getMaxOidsPerReq(void)
   return(maxOidsPerReq);
 }
 //--------------------------------------------------------------------
+void devSnmp_host::setDisabled(bool state)
+{
+  // set our local variable
+  disabled = state;
+}
+//--------------------------------------------------------------------
+bool devSnmp_host::isDisabled(void)
+{
+  return disabled;
+}
+//--------------------------------------------------------------------
 void devSnmp_host::processing(epicsTimeStamp *pnow)
 {
   // roll through each host/community group, having it process
@@ -3669,7 +3686,7 @@ bool devSnmp_host::reportMatchAny(char *match)
 void devSnmp_host::report(int level, char *match)
 {
   printf("  %s\n",HOST_BAR);
-  printf("  host %s\n",hostName());
+  printf("  host %s%s\n",hostName(),disabled ? " (disabled)" : "");
   printf("  %s\n",HOST_BAR);
 
   printf("  SNMP version    : %s\n",snmpVersionString(getSnmpVersion()));
@@ -3946,6 +3963,22 @@ int devSnmp_manager::getHostMaxOidsPerReq(char *host)
   return( pHost ? pHost->getMaxOidsPerReq() : DEFAULT_MAX_OIDS_PER_REQ );
 }
 //--------------------------------------------------------------------
+bool devSnmp_manager::isHostDisabled(char *host)
+{
+  // locate matching host
+  devSnmp_host *pHost = findHost(host);
+  return( pHost ? pHost->isDisabled() : true );
+}
+//--------------------------------------------------------------------
+void devSnmp_manager::setHostDisabled(char *host, int ival)
+{
+  // locate matching host
+  devSnmp_host *pHost = findHost(host);
+
+  // disable host if ival is non-zero
+  if (pHost) pHost->setDisabled(ival);
+}
+//--------------------------------------------------------------------
 devSnmp_pv *devSnmp_manager::addPV(struct dbCommon *pRec, struct link *pLink)
 {
   // parse INP/OUT line
@@ -4034,7 +4067,7 @@ void devSnmp_manager::processing(epicsTimeStamp *pnow)
   for (int host_idx = 0; host_idx < hostCount; host_idx++) {
     devSnmp_host *pHost = hostArray[host_idx];
     if (! pHost) continue;
-    pHost->processing(pnow);
+    if (! pHost->isDisabled()) pHost->processing(pnow);
   }
 }
 //--------------------------------------------------------------------
@@ -4542,6 +4575,23 @@ int devSnmpSetDebug(int level)
   if (! checkInit()) return(epicsError);
   devSnmpSetParam("DebugLevel",level);
   printf("(devSnmpSetDebug deprecated, use devSnmpSetParam(\"DebugLevel\",%d) instead\n",level);
+  return(epicsOk);
+}
+//--------------------------------------------------------------------
+int devSnmpSetHostDisabled(char *hostName, char *value)
+{
+  if (! checkInit()) return(epicsError);
+  if ((hostName == NULL) || (hostName[0] == 0)) {
+    // no argument, show usage
+    printf("Usage: devSnmpSetHostDisabled host [0 | 1]\n");
+  } else if ((value == NULL) || (value[0] == 0)) {
+    // no value, show host status
+    bool disabled = pManager->isHostDisabled(hostName);
+    printf("%s: %s (%d)\n", hostName, (disabled ? "disabled" : "enabled"), disabled);
+  } else {
+    int ival = strcmp(value, "0");
+    pManager->setHostDisabled(hostName,ival);
+  }
   return(epicsOk);
 }
 //--------------------------------------------------------------------

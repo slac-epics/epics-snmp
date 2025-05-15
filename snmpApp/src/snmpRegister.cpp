@@ -142,6 +142,21 @@ static const iocshArg * const iocsh_devSnmpSetParam_Args[2] =
 static const iocshFuncDef iocsh_devSnmpSetParam_FuncDef = {"devSnmpSetParam",2,iocsh_devSnmpSetParam_Args};
 
 /*--------------------------------------------------------------------*/
+static void iocsh_devSnmpSetHostDisabled(const iocshArgBuf *args)
+{
+  char *host = args[0].sval;
+  char *value = args[1].sval;
+
+  devSnmpSetHostDisabled(host,value);
+}
+
+static const iocshArg iocsh_devSnmpSetHostDisabled_Arg0 = { "host", iocshArgString };
+static const iocshArg iocsh_devSnmpSetHostDisabled_Arg1 = { "[0 | 1]", iocshArgString };
+static const iocshArg * const iocsh_devSnmpSetHostDisabled_Args[2] =
+{&iocsh_devSnmpSetHostDisabled_Arg0, &iocsh_devSnmpSetHostDisabled_Arg1};
+static const iocshFuncDef iocsh_devSnmpSetHostDisabled_FuncDef = {"devSnmpSetHostDisabled",2,iocsh_devSnmpSetHostDisabled_Args};
+
+/*--------------------------------------------------------------------*/
 static void iocsh_snmpr(const iocshArgBuf *args)
 {
   int level = args[0].ival;
@@ -195,6 +210,7 @@ void snmp_Register()
   iocshRegister(&iocsh_devSnmpSetSnmpV3Param_FuncDef,      iocsh_devSnmpSetSnmpV3Param);
   iocshRegister(&iocsh_devSnmpSetSnmpV3ConfigFile_FuncDef, iocsh_devSnmpSetSnmpV3ConfigFile);
   iocshRegister(&iocsh_devSnmpSetParam_FuncDef,            iocsh_devSnmpSetParam);
+  iocshRegister(&iocsh_devSnmpSetHostDisabled_FuncDef,     iocsh_devSnmpSetHostDisabled);
   iocshRegister(&iocsh_snmpr_FuncDef,                      iocsh_snmpr);
   iocshRegister(&iocsh_snmpz_FuncDef,                      iocsh_snmpz);
   iocshRegister(&iocsh_snmpzr_FuncDef,                     iocsh_snmpzr);

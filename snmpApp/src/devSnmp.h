@@ -552,6 +552,8 @@ class devSnmp_group
 
     devSnmp_pv *findPV(char *pvName);
 
+    bool isHostDisabled(void);
+
   protected:
     devSnmp_manager      *pOurMgr;
     devSnmp_host         *pOurHost;
@@ -602,6 +604,9 @@ class devSnmp_host
     int getMaxOidsPerReq(void);
     void setMaxOidsPerReq(int maxoids);
 
+    bool isDisabled(void);
+    void setDisabled(bool state);
+
     void sessionRetriesChange(void);
     void sessionTimeoutChange(void);
 
@@ -614,6 +619,7 @@ class devSnmp_host
     snmpPointerList *activeSessionList;
     int              snmpVersion;
     int              maxOidsPerReq;
+    bool             disabled;
     snmp_engineID    cachedEngineID;
 
     devSnmp_v3params v3params;
@@ -636,6 +642,8 @@ class devSnmp_manager
     void getHostSnmpV3Params(char *host, devSnmp_v3params *v3params);
     int getHostMaxOidsPerReq(char *host);
     void setMaxOidsPerReq(char *host, int maxoids);
+    bool isHostDisabled(char *host);
+    void setHostDisabled(char *host, int flag);
     devSnmp_pv *addPV(struct dbCommon *pRec, struct link *pLink);
     void processing(epicsTimeStamp *pnow);
     void zeroCounters(void);
@@ -710,6 +718,7 @@ extern "C" {
   int devSnmpSetMaxOidsPerReq(char *hostName, int maxoids);
   int devSnmpSetParam(const char *param, int value);
   int devSnmpSetDebug(int level);
+  int devSnmpSetHostDisabled(char *hostName, char *value);
   int snmpr(int level, char *match);
   int snmpz(void);
   int snmpzr(int level, char *match);

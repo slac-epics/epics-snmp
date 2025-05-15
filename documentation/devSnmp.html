@@ -555,6 +555,16 @@ for a helpful little perl script which provides a numeric definition such as:
   </dd>
   <br>
 
+  <dt id="devSnmpSetHostDisabled"><b>devSnmpSetHostDisabled(hostname,flag)</b></dt>
+  <dd>
+  <p>Enables or disables OID polling for the given host. Polling is enabled if
+     <i>flag</i> is 0, and disabled if <i>flag</i> is non-zero. The default is 0.</p>
+  <p>This can be used to temporarily suppress SNMP traffic during maintenance.</p>
+  <p>If <i>flag</i> is not specified, the current polling status for the host
+     is displayed.</p>
+  </dd>
+  <br>
+
   <dt id="snmpr"><b>snmpr(level,match)</b></dt>
   <dd>
   <p>Outputs a report with the given level of detail. Currently levels
